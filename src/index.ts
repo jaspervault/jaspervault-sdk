@@ -1,2 +1,5 @@
 import JVault from './jVault';
-export { JVault };
+import { JVaultConfig, OptionType } from '../src/utils/types/index';
+import ADDRESSES from './utils/coreAssets.json';
+export { JVault, JVaultConfig, OptionType, ADDRESSES };
+

@@ -14,11 +14,9 @@ yarn add @jaspervault/jvault.js
 
 ## Getting Started
 
-```javascript
-const { JVault } = require("@jaspervault/jvault.js");
-const ADDRESSES = require("@jaspervault/jvault.js/dist/src/utils/coreAssets.json");
+```javascript 
+const { JVault, ADDRESSES, OptionType } = require("@jaspervault/jvault.js");
 const config = require("@jaspervault/jvault.js/dist/src/api/config/arbitrum.json");
-const { OptionType } = require("@jaspervault/jvault.js/dist/src/utils/types/index");
 const ethers = require('ethers');
 
 exports.demo = async ctx => {
@@ -68,7 +66,7 @@ exports.demo = async ctx => {
       console.error(`call order failed: ${error}`);
     }
   }
-  ctx.body = db.users;
+  ctx.body = "OK";
 };
 ```
 
