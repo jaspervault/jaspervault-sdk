@@ -1,0 +1,77 @@
+{
+    "safeBlock": 3,
+    "chainId": 8453,
+    "name": "jasperVault",
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "uniswapRouterV2": "0x2626664c2603336E57B271c5C0b26F421741e481",
+    "uniswapRouterV3": "0x2626664c2603336E57B271c5C0b26F421741e481",
+    "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    "weth": "0x4200000000000000000000000000000000000006",
+    "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
+    "bundleUrl": "https://ethgo-arbitrum.fly.dev",
+    "rpcUrl": "https://base-mainnet.g.alchemy.com/v2/DiRWMmsF6p2GNC5TLHLHjEyt7p8YjWK_",
+    "contractData": {
+        "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "DiamondCutFacet": "0xc8bf340180C72bf17E3002e252A35B0BEB7cACa5",
+        "DiamondLoupeFacet": "0x11F98aE1CB23111d32FDeB22824363a79aF5C9FD",
+        "OwnershipFacet": "0x8e81aC9afC2a158a7550Ec616A999b55A65E18A2",
+        "Diamond": "0xB571399F2824424D4c15496406Ea7ACBc1a276AB",
+        "PlatformFacet": "0x90d7b52487997Dca7e4B4F991BA66404321D7e3e",
+        "VaultFacet": "0xfce8C16411d205D87B993E18308ee9BF59874e39",
+        "OptionFacet": "0x2fCfc7c6A59F12C1F44ba0d993555AD56EeA522b",
+        "PaymasterFacet": "0x6342516ad91E7a4149A5Fa033B5C7AAc1351e8D0",
+        "IssuanceFacet": "0xAfD11c2d9350B2080eD601Ba64ea9f1F532A093c",
+        "VaultPaymaster": "0x88EEd20e8a5Fb4bE8A4B53CDeeFC67BB91047f2D",
+        "VaultManageModule": "0xe7D79A3a17730f340Cc594868a55B80F4c0c3138",
+        "TradeModule": "0xeF0Abec11456846964D59141FD6961cC5F7AD010",
+        "IssuanceModule": "0x8690759b04916466B20C5b67d6ccF9743B3f99de",
+        "Manager": "0xdaC0bE32467348ea71654d2A5aAe7793d065191f",
+        "PriceOracle": "0xE632D208e2F1561414E4a8442f8e20614Faa6CE6",
+        "OptionService": "0xEcb1233E463Aa6cf6Ac0970D5643935A929fFad9",
+        "OptionModule": "0xcf2fe96cC29f6A90bf9b489a98c537826b2Bc60d",
+        "UniswapV2ExchangeAdapter": "0x94d0d676dDF1eFf0f234F5Dfe7371100acF2BC8C",
+        "UniswapV3ExchangeAdapter": "0xe1099a130A41B7a45Bc0e107714f98b18Fded40B",
+        "PythOracleAdapter": "0x6C7e7176e594eD05b506930bd2e06370E8f5cb70",
+        "ChainLinkOracleAdapter": "0x3254086894cDBF733E4e87f750ac557D042F3C80",
+        "VaultFactory": "0xB0329dDA9E3707470360e39898670DC9afE10fe1",
+        "OptionModuleV2": "0x4De345778a85Cf12aF49c423c75Fe02C5799d425",
+        "OptionFacetV2": "0x89F59EBaD0D8933551Aed72b13097Ad7addBE819"
+    },
+    "tokens": [
+        {
+            "name": "eth",
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "type": 1
+        },
+        {
+            "name": "weth",
+            "address": "0x4200000000000000000000000000000000000006",
+            "type": 1
+        },
+        {
+            "name": "usdc",
+            "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "type": 1
+        }
+    ],
+    "pyth": [
+        [
+            "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "0x4200000000000000000000000000000000000006",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+            "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+            "0x0000000000000000000000000000000000000001",
+            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        ]
+    ]
+}

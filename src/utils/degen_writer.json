@@ -1,0 +1,34 @@
+{
+    "arbitrum": {
+        "CALL": {
+            "ETH": "0x5954B84F4ba745E1A85E9A5875ce3bDf863200ba",
+            "WBTC": "0x3cF1A20AE73ff128D3A40F4492fdE59F2B2D1e8C",
+            "ARB": "0x1eb466780e412C796A7BEdA541CfF47E0571A000",
+            "WSOL": "0x69ff3c3344C4F945205ddeA9A66c99c0A07D8aae",
+            "DLCBTC": "0x3cF1A20AE73ff128D3A40F4492fdE59F2B2D1e8C"
+        },
+        "PUT": {
+            "ETH": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89",
+            "WBTC": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89",
+            "ARB": "0x1DDD814589376Db497F91eFD2E6AFF969822a951",
+            "WSOL": "0x1DDD814589376Db497F91eFD2E6AFF969822a951",
+            "DLCBTC": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89"
+        }
+    },
+    "base": {
+        "CALL": {
+            "ETH": "0x37a4f273B341C077230aA2d967590b8a74D37598"
+        },
+        "PUT": {
+            "ETH": "0x448A6CD6c9b0F4Af691925BEf78fBB8f964aA0aa"
+        }
+    },
+    "base_uat": {
+        "CALL": {
+            "ETH": "0x37a4f273B341C077230aA2d967590b8a74D37598"
+        },
+        "PUT": {
+            "ETH": "0x448A6CD6c9b0F4Af691925BEf78fBB8f964aA0aa"
+        }
+    }
+}

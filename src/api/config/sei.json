@@ -1,0 +1,79 @@
+{
+    "safeBlock": 10,
+    "chainId": 1329,
+    "name": "jasperVault",
+    "version": "2.0.0",
+    "entryPoint": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
+    "uniswapRouterV2": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+    "uniswapRouterV3": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    "weth": "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8",
+    "pythAddr": "0xe9d69CdD6Fe41e7B621B4A688C5D1a68cB5c8ADc",
+    "usd": "0x0000000000000000000000000000000000000001",
+    "bundleUrl": "https://ethgo-sei.fly.dev",
+    "positionTypeCount": 6,
+    "contractData": {
+        "EntryPoint": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
+        "ERC20TOKEN": "0x32CE600C20Ce6C6f68F4F81B547c4edcAB11840d",
+        "DiamondCutFacet": "0x34328baf6BC36609D10944a5B6Cd4b580CE59D79",
+        "DiamondLoupeFacet": "0xB3562A86186D37d2ff2b20f6983D0f7E65144965",
+        "OwnershipFacet": "0xc8bf340180C72bf17E3002e252A35B0BEB7cACa5",
+        "Diamond": "0x11F98aE1CB23111d32FDeB22824363a79aF5C9FD",
+        "PlatformFacet": "0x8e81aC9afC2a158a7550Ec616A999b55A65E18A2",
+        "VaultFacet": "0x90d7b52487997Dca7e4B4F991BA66404321D7e3e",
+        "OptionFacet": "0xfce8C16411d205D87B993E18308ee9BF59874e39",
+        "PaymasterFacet": "0x61Ac9e947918F1da8B4103C9F89E084Fe491d3d1",
+        "IssuanceFacet": "0x6342516ad91E7a4149A5Fa033B5C7AAc1351e8D0",
+        "VaultPaymaster": "0xBea48CA3AaC57D570a9054CC374D2F01c2Bc48Ed",
+        "VaultManageModule": "0x88EEd20e8a5Fb4bE8A4B53CDeeFC67BB91047f2D",
+        "TradeModule": "0xe7D79A3a17730f340Cc594868a55B80F4c0c3138",
+        "IssuanceModule": "0xeF0Abec11456846964D59141FD6961cC5F7AD010",
+        "Manager": "0x8690759b04916466B20C5b67d6ccF9743B3f99de",
+        "PriceOracle": "0xdaC0bE32467348ea71654d2A5aAe7793d065191f",
+        "OptionService": "0xE632D208e2F1561414E4a8442f8e20614Faa6CE6",
+        "OptionModule": "0xEcb1233E463Aa6cf6Ac0970D5643935A929fFad9",
+        "UniswapV2ExchangeAdapter": "0x1B44c8d71DFC49e42e224c6D4EB7FDe00498dd3f",
+        "UniswapV3ExchangeAdapter": "0x94d0d676dDF1eFf0f234F5Dfe7371100acF2BC8C",
+        "PythOracleAdapter": "0xe1099a130A41B7a45Bc0e107714f98b18Fded40B",
+        "VaultFactory": "0x0f487603edE93a5329023512B7dcdA632eD70Ed5",
+        "OptionFacetV2": "0xDCB8372F4C3f35667102d3705C01B60513af58E8",
+        "OptionModuleV2": "0x73C721E3E3Ca7394300f31DD2C043C51ad28BF5b"
+    },
+    "tokens": [
+        {
+            "name": "weth",
+            "address": "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8",
+            "type": 1
+        },
+        {
+            "name": "usdt",
+            "address": "0xB75D0B03c06A926e488e2659DF1A861F860bD3d1",
+            "type": 1
+        },
+        {
+            "name": "eth",
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "type": 1
+        }
+    ],
+    "pyth": [
+        [
+            "0x53614f1cb0c031d4af66c04cb9c756234adad0e1cee85303795091499a4084eb",
+            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+            "0xB75D0B03c06A926e488e2659DF1A861F860bD3d1",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "0x160345fC359604fC6e70E3c5fAcbdE5F7A9342d8",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ]
+    ]
+}
