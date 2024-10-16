@@ -1,12 +1,13 @@
 import { SimpleAccountAPI } from '@account-abstraction/sdk';
-import { JVaultConfig, Address, BundlerOP } from '../utils/types/index';
+import { JVaultConfig, Address, BundlerOP, BundlerEstimate, NetworkConfig } from '../utils/types/index';
 import { EntryPointWrapper, VaultWrapper, VaultFactoryWrapper } from '../wrappers/';
-import { TransactionResponse, TransactionReceipt } from '@ethersproject/providers';
+import { TransactionResponse } from '@ethersproject/providers';
 import { AxiosResponse } from 'axios';
 import axios from 'axios';
 import sleep from 'sleep-promise';
-import { BigNumber } from 'ethers';
 import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/';
+import { ethers } from 'ethers';
+
 
 class BundlerHelper {
    private accountAPI: SimpleAccountAPI;
@@ -33,9 +34,11 @@ class BundlerHelper {
       const dest = [];
       const value = [];
       const func = [];
+      let vaule_tx = ethers.constants.Zero;
       op_arr.forEach(element => {
          dest.push(element.dest);
          value.push(element.value);
+         vaule_tx = vaule_tx.add(element.value);
          func.push(element.data);
       });
       const vaultCode = await this.config.ethersProvider.getCode(vault);
@@ -43,10 +46,33 @@ class BundlerHelper {
          throw new Error('Vault not exist');
       }
       const Vault = new VaultWrapper(this.config.ethersSigner, vault);
+      txOpts.value = vaule_tx;
       return await Vault.executeBatch(dest, value, func, false, txOpts);
    }
-   async sendtoBundler(vault: Address, vaultIndex: number, op_arr: BundlerOP[]) {
-      // let client = new HttpRpcClient(settings.bundleUrl,settings.entryPoint, settings.chainId)
+   toHex(n) {
+      return '0x' + String(Number(n).toString(16));
+   }
+   async estimateUserOperationGas(params: BundlerEstimate) {
+      const paymasterUrl = 'https://bundler.particle.network/#eth_estimateUserOperationGas';
+      const options = {
+         'method': 'eth_estimateUserOperationGas',
+         'params': [
+            // partial user operation
+            params,
+            '0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789',
+         ],
+         'id': 1,
+         'jsonrpc': '2.0',
+         'chainId': this.config.data.chainId,
+      };
+      const res = await axios.post(paymasterUrl, options);
+      if (res.data.error) {
+         console.log('eth_estimateUserOperationGas error: ', res.data);
+         return;
+      }
+   }
+   async sendtoBundler(vault: Address, vaultIndex: number, op_arr: BundlerOP[], networkConfig?: NetworkConfig) {
+      const chainID = this.config.data.chainId;
       const dest = [];
       const value = [];
       const func = [];
@@ -63,109 +89,134 @@ class BundlerHelper {
          index: vaultIndex,
       });
       const nonce = await this.EntryPointWrapper.getNonce(vault, 0);
-
-      // console.log(nonce, "nonce")
-
-      const code = await this.config.ethersProvider.getCode(vault);
-
       let initCode = '0x';
-      const tokenUrl = `${this.config.data.bundleUrl}/tyche/api/gasPrice`;
-      console.log('tokenUrl', tokenUrl);
-      const feeData = await axios.get(tokenUrl);
-
-      if (!feeData || !feeData.data || !feeData.data.data) {
-         console.log('<error order>', feeData);
-         return undefined;
-      }
-
-      const {
-         suggesMaxFeePerGas, suggesMaxPriorityFeePerGas,
-      } = feeData.data.data.data;
-      if (code == '0x') {
-         initCode = `${this.config.data.contractData.VaultFactory}5fbfb9cf${String(await this.config.ethersSigner.getAddress()).substring(2).padStart(64, '0')}${((Number(vaultIndex)).toString(16)).padStart(64, '0')}`;
-      }
-
       const Vault = new VaultWrapper(this.config.ethersSigner, vault);
-
       const calldata = await Vault.executeBatch(dest, value, func, true);
+      // const feeData: FeeData = await this.config.ethersProvider.getFeeData();
+      // const {
+      //    maxPriorityFeePerGas, lastBaseFeePerGas
+      // } = feeData
+      const code = await this.config.ethersSigner.provider.getCode(vault);
 
-      // let calldata = '0x'
-      // 获取当前小费
-      // let feeData = await provider.getFeeData()
-
+      if (code == '0x') {
+         initCode = `${networkConfig.contractData.VaultFactory}5fbfb9cf${String(await this.config.ethersSigner.getAddress()).substring(2).padStart(64, '0')}${String((Number(vaultIndex)).toString(16)).padStart(64, '0')}`;
+       }
       const unsignOp = {
          sender: vault,
          nonce: nonce,
          initCode: initCode,
          callData: calldata,
-         callGasLimit: 4000000,
-         verificationGasLimit: 1500000,
-         maxFeePerGas: BigNumber.from(suggesMaxFeePerGas).mul(3).div(2),
-         maxPriorityFeePerGas: BigNumber.from(suggesMaxPriorityFeePerGas).mul(11).div(10),
+         callGasLimit: 3500000,
+         verificationGasLimit: 500000,
+         maxFeePerGas: ethers.utils.parseUnits('0.05', 'gwei'),
+         maxPriorityFeePerGas: ethers.utils.parseUnits('0.05', 'gwei'),
          // paymasterAndData: "0x",
-         paymasterAndData: this.config.data.contractData.VaultPaymaster,
-         //   paymasterAndData:"0x647f1eA2ed929D2D0dC0783c1810a57501C38e36",
-         preVerificationGas: 4500000,
-         signature: '',
+         paymasterAndData: '0x',
+         preVerificationGas: 500000,
+         signature: '0x',
       };
-
-      // verificationGasLimit*3 + preVerificationGas + callGasLimit
-      // (500000*3 +90000+9000000) *1855652560640
-
-      // var gas= await ethers.provider.estimateGas({
-      //    from:"0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
-      //    to: "0x7d1679E9610d5C1737f074882753497bBeBBbD80",
-      //    data: calldata,
-
-      //    // 1 ether
-      //    value: 0
-      // })
-      // console.log("gas","--------------",gas)
-      // return
-      // maxFeePerGas
-      // console.log("hash", await accountAPI.getUserOpHash(unsignOp))
-
-      const op = await this.accountAPI.signUserOp(unsignOp);
-      console.log('<op>', op);
-
-      op.sender = await op.sender;
-      op.maxFeePerGas = Number(await op.maxFeePerGas);
-      op.maxPriorityFeePerGas = Number(await op.maxPriorityFeePerGas);
-      op.maxFeePerGas = Number(op.maxFeePerGas);
-      op.nonce = Number(await op.nonce);
-      op.verificationGasLimit = Number(op.verificationGasLimit);
-      op.signature = await op.signature;
-      let tx: TransactionReceipt = undefined;
-
-      console.log('op', op);
-      // tx = await this.EntryPointWrapper.handleOps([op], await this.config.ethersSigner.getAddress())
-      // console.log("tx", tx)
-      // return tx
-      const data = {
-         'address': this.config.data.contractData.EntryPoint,
-         'method': 'handleOps',
-         'args': {
-            'ops': [
-               op,
-            ],
-            'beneficiary': '0x2E4621E682272680AEAB78f48Fc0099CED79e7d6',
+      const projectUuid = '47ad2d9c-2271-4c27-a4e1-6856db7ffc76';
+      const projectKey = 'c6fQ4cVGOOV5MWIPB7wCksHxMINtQhEAPHPRswKd';
+      const entryPoint = '0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789';
+      const paymasterUrl = 'https://paymaster.particle.network';
+      const userOp = {
+         'sender': unsignOp.sender,
+         'nonce': this.toHex(await unsignOp.nonce),
+         'initCode': unsignOp.initCode,
+         'callData': await unsignOp.callData,
+         'callGasLimit': this.toHex(unsignOp.callGasLimit),
+         'verificationGasLimit': this.toHex(unsignOp.verificationGasLimit),
+         'maxFeePerGas': this.toHex(unsignOp.maxFeePerGas),
+         'maxPriorityFeePerGas': this.toHex(unsignOp.maxPriorityFeePerGas),
+         'paymasterAndData': unsignOp.paymasterAndData,
+         'preVerificationGas': this.toHex(unsignOp.preVerificationGas),
+         'signature': unsignOp.signature,
+      };
+      let res = await axios.post(paymasterUrl,
+         {
+            method: 'pm_sponsorUserOperation',
+            params: [userOp, entryPoint],
          },
-      };
-      console.log('<post order>');
-
-      const order = await axios.post(`${this.config.data.bundleUrl}/tyche/api/transact`, data);
-      if (!order || !order.data || !order.data.data) {
-         console.log('<order error>', order.data);
-         return undefined;
+         {
+            params: {
+               chainId: chainID,
+               projectUuid: projectUuid,
+               projectKey: projectKey,
+            },
+         }
+      );
+      if (!res || !res.data || !res.data.result || !res.data.result.paymasterAndData) {
+         console.log(res.data, 'pm_sponsorUserOperation fail');
       }
-      console.log('<order Id>', order.data.data.id);
-      const hash = await this.getOperationHash(order.data.data.id, 300, 2);
-      // await hash.wait(1)
+
+      userOp.paymasterAndData = res.data.result.paymasterAndData;
+      console.log(userOp);
+      const op = await this.accountAPI.signUserOp(userOp);
+
+      const options = {
+         'method': 'eth_sendUserOperation',
+         'params': [{
+            'sender': await op.sender,
+            'nonce': await op.nonce,
+            'initCode': await op.initCode,
+            'callData': await op.callData,
+            'callGasLimit': await op.callGasLimit,
+            'verificationGasLimit': await op.verificationGasLimit,
+            'maxFeePerGas': op.maxFeePerGas,
+            'maxPriorityFeePerGas': op.maxPriorityFeePerGas,
+            'paymasterAndData': await op.paymasterAndData,
+            'preVerificationGas': await op.preVerificationGas,
+            'signature': await op.signature,
+         }, entryPoint],
+         'id': 1,
+         'jsonrpc': '2.0',
+         'chainId': chainID,
+      };
+      console.log(options);
+      const bundlerUrl = 'https://bundler.particle.network/#eth_sendUserOperation';
+      res = await axios.post(bundlerUrl, options);
+      if (res.data.error) {
+         console.log('eth_sendUserOperation error: ', res.data);
+         // var dataField = JSON.parse(res.data.error.message.match(/{.*?}$/)[0]).error.data;
+         // console.log("particle eth_sendUserOperation parseRevertReason: ", parseRevertReason(dataField))
+         return;
+      }
+      const hash = await this.getUserOpByHash(res);
+      await hash.wait(3);
       console.log('<tx hash>', hash.hash);
-      tx = await this.config.ethersProvider.getTransactionReceipt(String(hash.hash));
-      console.log('<TransactionReceipt>', tx);
-      await hash.wait(2);
       return hash.hash;
+   }
+
+   async getUserOpByHash(res, timeout = 30, interval = 2) {
+      const params = {
+         'method': 'eth_getUserOperationByHash',
+         'params': [
+            res.data.result,
+         ],
+         'id': 1,
+         'jsonrpc': '2.0',
+         'chainId': this.config.data.chainId,
+      };
+      const tokenUrl = 'https://bundler.particle.network/#eth_getUserOperationByHash';
+
+      let hash;
+      const endtime = Date.now() + timeout * 1000;
+      let transaction;
+      while (Date.now() < endtime) {
+         res = await axios.post(tokenUrl, params);
+         //  console.log("res",  await res.data)
+         if (res && res.data && res.data.result && res.data.result.transactionHash) {
+            hash = res.data.result.transactionHash;
+            while (!transaction) {
+               transaction = await this.config.ethersProvider.getTransaction(hash);
+               await sleep(500);
+            }
+            break;
+         }
+         await new Promise(resolve => setTimeout(resolve, interval * 1000));
+
+      }
+      return await this.config.ethersProvider.getTransaction(hash);
    }
 
    async getOperationHash(orderID: string, timeout: number, interval: number) {

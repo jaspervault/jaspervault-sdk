@@ -26,10 +26,12 @@ import {
   IssuanceModule__factory
 } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/modules/';
 
-import { VaultFactory__factory, VaultPaymaster__factory, PriceOracle__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/';
+import { VaultFactory__factory, VaultPaymaster__factory, PriceOracle__factory, Manager__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/';
 
 import { EntryPoint__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/eip/4337/core/';
+import { IERC20__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/interfaces/external';
 import { Vault__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/Vault.sol';
+
 import { OptionService__factory } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/service/';
 
 
@@ -99,5 +101,16 @@ export default class ContractWrapper {
   ): PriceOracle__factory {
     return PriceOracle__factory.connect(priceOracleAddress, this.signer);
   }
+  public getManager(
+    managerAddress: Address
+  ): Manager__factory {
+    return Manager__factory.connect(managerAddress, this.signer);
+  }
+  public getERC20(
+    erc20Address: Address
+  ): IERC20__factory {
+    return IERC20__factory.connect(erc20Address, this.signer);
+  }
+
 }
 

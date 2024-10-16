@@ -43,13 +43,24 @@ export default class IssuanceModuleWrapper {
         }
     }
 
-    public async issue(vault_addr: Address, payableFrom_addr: Address, assets: Address[], amounts: Uint256[], txOpts: TransactionOverrides = {}): Promise<any> {
+    public async issue(
+        vault_addr: Address,
+        payableFrom_addr: Address,
+        assets: Address[],
+        amounts: Uint256[],
+        encodeFunc?: boolean,
+        txOpts: TransactionOverrides = {}): Promise<any> {
         try {
             const issuanceModule = await this.contracts.getIssuanceModule(this.IssuanceModuleAddress);
-            return issuanceModule.issue(vault_addr, payableFrom_addr, assets, amounts, txOpts);
+            if (encodeFunc) {
+                return issuanceModule.interface.encodeFunctionData('issue', [vault_addr, payableFrom_addr, assets, amounts]);
+            }
+            else {
+                return issuanceModule.issue(vault_addr, payableFrom_addr, assets, amounts, txOpts);
+            }
         }
         catch (error) {
-            console.error('Error issue:', error);
+            console.error('Error issue asset:', error);
         }
     }
 

@@ -1,6 +1,5 @@
 {
     "null": "0x0000000000000000000000000000000000000000",
-    "native_token": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     "ethereum": {
         "WETH": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "WSTETH": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
@@ -53,6 +52,10 @@
         "USDe": "0x4c9edd5852cd905f086c759e8383e09bff1e68b3",
         "amprETH": "0xcDC51F2B0e5F0906f2fd5f557de49D99c34Df54e",
         "amphrLRT": "0x06824C27C8a0DbDe5F72f770eC82e3c0FD4DcEc3"
+    },
+    "bitlayer": {
+        "BTC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "USDT": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2"
     },
     "fantom": {
         "WFTM": "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
@@ -251,6 +254,7 @@
         "FIL": "0xffffffffcd0ad0ea6576b7b285295c85e94cf4c1"
     },
     "arbitrum": {
+        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         "WETH": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
         "WBTC": "0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f",
         "WSOL": "0x2bcC6D6CdBbDC0a4071e48bb3B969b06B3330c07",
@@ -1462,10 +1466,12 @@
         "DAI": "0x4AF15ec2A0BD43Db75dd04E62FAA3B8EF36b00d5"
     },
     "base": {
+        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         "WETH": "0x4200000000000000000000000000000000000006",
         "USDbC": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
         "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-        "DAI": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb"
+        "DAI": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb",
+        "cbBTC": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
     },
     "sei": {
         "SEI": "usei",

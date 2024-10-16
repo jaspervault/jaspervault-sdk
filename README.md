@@ -14,9 +14,11 @@ yarn add @jaspervault/jvault.js
 
 ## Getting Started
 
-```javascript 
-const { JVault, ADDRESSES, OptionType } = require("@jaspervault/jvault.js");
+```javascript
+const { JVault } = require("@jaspervault/jvault.js");
+const ADDRESSES = require("@jaspervault/jvault.js/dist/src/utils/coreAssets.json");
 const config = require("@jaspervault/jvault.js/dist/src/api/config/arbitrum.json");
+const { OptionType } = require("@jaspervault/jvault.js/dist/src/utils/types/index");
 const ethers = require('ethers');
 
 exports.demo = async ctx => {
@@ -41,7 +43,7 @@ exports.demo = async ctx => {
   if (optionVault != ethers.constants.AddressZero) {
     try {
       let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettings();
-      let tx = await jVault_holder.OptionTradingAPI.InitializeVaultAndplaceOrder({
+      let tx = await jVault_holder.OptionTradingAPI.createOrder({
         amount: ethers.utils.parseEther('100'),
         underlyingAsset: ADDRESSES.arbitrum.ARB,
         optionType: OptionType.CALL,
@@ -66,7 +68,7 @@ exports.demo = async ctx => {
       console.error(`call order failed: ${error}`);
     }
   }
-  ctx.body = "OK";
+  ctx.body = db.users;
 };
 ```
 
@@ -129,16 +131,8 @@ PRIVATE_KEY_WRITER=YOUT_PRIVATE_KEY
 The code below demonstrates how to check if a vault exists and how to create a new one.
 
 ```typescript
-let vault1_addr = await jVault_holder.VaultAPI.getAddress(config_holder.EOA, 1);
-    let code = await config_holder.ethersProvider.getCode(vault1_addr);
-    if (code == '0x') {
-        console.log('Creating vaults:' + vault1_addr + ' ' + 1);
-        vault1_addr = await jVault_holder.VaultAPI.createAccount(config_holder.EOA, 1, {
-            maxFeePerGas: feeData.lastBaseFeePerGas,
-            maxPriorityFeePerGas: ethers.utils.parseEther('0.0001')
-        });
-    }
-    return vault1_addr;
+    let vaults_1 = await jVault_holder.VaultAPI.initNewAccount();
+
 ```
 
 ## Execute Your First Transaction
@@ -146,7 +140,7 @@ let vault1_addr = await jVault_holder.VaultAPI.getAddress(config_holder.EOA, 1);
 Let's create your first transaction
 
 ```typescript
- let tx = await jVault_holder.OptionTradingAPI.InitializeVaultAndplaceOrder({
+ let tx = await jVault_holder.OptionTradingAPI.createOrder({
                 amount: ethers.utils.parseEther('100'),
                 underlyingAsset: ADDRESSES.arbitrum.ARB,
                 optionType: OptionType.CALL,
@@ -157,7 +151,7 @@ Let's create your first transaction
                 chainId: config.chainId,
                 secondsToExpiry: 3600 * 2
             }, {
-                maxFeePerGas: feeData.maxFeePerGas,
+                maxFeePerGas: feeData.lastBaseFeePerGas?.add(ethers.utils.parseUnits('0.001', 'gwei')),
                 maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
             });
  if (tx) {

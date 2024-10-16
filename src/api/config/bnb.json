@@ -1,0 +1,171 @@
+{
+    "safeBlock": 1,
+    "chainId": 56,
+    "name": "bnb",
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "uniswapRouterV2": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+    "uniswapRouterV3": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    "weth": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+    "pythPriceFeedAddr": "0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594",
+    "bundleUrl": "https://bundler.particle.network",
+    "rpcUrl": "https://bnb-mainnet.g.alchemy.com/v2/O6KV2NWJZqZZELxRphDj0OaGu0mQ5fha",
+    "subgraphUrl": "https://subgraph.satsuma-prod.com/0981c2ab3685/garys-team/jaspervault-v2-bsc/api",
+    "optionQuotesUrl": "https://uat-jasperquotecenter.fly.dev/api/public/signedPrice",
+    "contractData": {
+        "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "DiamondCutFacet": "0xf2557A44DC8cB2CF326DE1Bd13209AB67913C6d5",
+        "DiamondLoupeFacet": "0xe832b3efc8C171349c85b078F32d3e8caE714a97",
+        "OwnershipFacet": "0xcbCCf074E030CDfd907375B00449B4f10d7d475f",
+        "Diamond": "0x79dB4B60edCC5641b714Ffa5B4C86D60bb9F1fb8",
+        "PlatformFacet": "0xeb9EC5B36B4e007569B4013deE10824E3f22302D",
+        "VaultFacet": "0xB5341487FF8516a5a07600D5C7e9f01081604F26",
+        "OptionFacet": "0x1263e05D00d0881510664B7C42cA9eF235aef4BF",
+        "OptionFacetV2": "0x2fCfc7c6A59F12C1F44ba0d993555AD56EeA522b",
+        "PaymasterFacet": "0x33f19fE7365970135Da4b27555c356d3B2a833e7",
+        "IssuanceFacet": "0xe1f6120b4eee205C5559c473eAaAFDd03FDfCb65",
+        "VaultPaymaster": "0x15f21d9e31b19ACe0Bc2969BA90C8c36Fe51768b",
+        "VaultManageModule": "0xeC066310d7178deE95A5BbA08589A084a7C7450B",
+        "TradeModule": "0xb54EDab731A8BC9b380cE2E4E5A6440B5Fa6Ce18",
+        "IssuanceModule": "0xfe8579d8e5D7BcD2e1cCdBAf01201cF18042897C",
+        "Manager": "0x44bbA04A45D0D8E53fCD1b5829c4A4f277F5BdA4",
+        "PriceOracle": "0x1548112FC70aFfc102baFC86EbfD1Df2B6B37A5F",
+        "OptionService": "0x7dE8FC0C5576F1999E593A4B000D1BdDBDAA2382",
+        "OptionModule": "0xa58BD7f47688ec90c598d9016f2a0A277e65d025",
+        "OptionModuleV2": "0xBf60aE29b3788382BA363530De19b7Fd27673F54",
+        "UniswapV2ExchangeAdapter": "0xb117E5C49777B56473bb8cd2a39506855409ca88",
+        "UniswapV3ExchangeAdapter": "0xC97cc526E4F0d68821825A1779cc1F050c09b304",
+        "PythOracleAdapter": "0x8361c436E7005d5F053d8c797a9E15017034d775",
+        "ChainLinkOracleAdapter": "0xcD34093A6B0667FDa708B4a1f5839984A71d19C8",
+        "TradingCreditPool": "0xc665A69806e6cA1DD6a4D61FA9C8C115D907A135",
+        "NFTFreeOptionPool": "0xee542B77dE4e75AB6366B39A58d094BB27841915",
+        "VaultFactoryV2": "0xEfaE37E4EF03615247D8E5776C4c2e796798e1D4",
+        "VaultFactory": "0xEfaE37E4EF03615247D8E5776C4c2e796798e1D4"
+    },
+    "tokens": [
+        {
+            "name": "weth",
+            "address": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+            "type": 1
+        },
+        {
+            "name": "usdc",
+            "address": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+            "type": 1
+        },
+        {
+            "name": "eth",
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "type": 1
+        },
+        {
+            "name": "wbtc",
+            "address": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+            "type": 1
+        },
+        {
+            "name": "usdt",
+            "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "type": 1
+        },
+        {
+            "name": "wsteth",
+            "address": "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+            "type": 1
+        }
+    ],
+    "chainLink": [
+        {
+            "id": "0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f",
+            "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        },
+        {
+            "id": "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33",
+            "wbtc": "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+        },
+        {
+            "id": "0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f",
+            "weth": "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        },
+        {
+            "id": "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+            "usdc": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        },
+        {
+            "id": "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+            "usdt": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+        },
+        {
+            "id": "0x9d4294bbcd1174d6f2003ec365831e64cc31d9f6f15a2b85399db8d5000960f6",
+            "wsteth": "0x2170Ed0880ac9A755fd29B2688956BD959F933F8",
+            "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "oracle": "0xb523AE262D20A936BC152e6023996e46FDC2A95D"
+        }
+    ],
+    "pyth": [
+        [
+            "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0xc9d8b075a5c69303365ae23633d4e085199bf5c520a3b90fed1322a0342ffc33",
+            "0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c",
+            "0x0000000000000000000000000000000000000001",
+            "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
+        ],
+        [
+            "0xff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+            "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c",
+            "0x0000000000000000000000000000000000000001",
+            "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612"
+        ],
+        [
+            "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+            "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8",
+            "0x0000000000000000000000000000000000000001",
+            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        ],
+        [
+            "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0cfc2798d1f9a9e9c94a",
+            "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+            "0x0000000000000000000000000000000000000001",
+            "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
+        ],
+        [
+            "0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b",
+            "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+            "0x0000000000000000000000000000000000000001",
+            "0x3f3f5dF88dC9F13eac63DF89EC16ef6e7E25DdE7"
+        ],
+        [
+            "0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784",
+            "0x5979D7b546E38E414F7E9822514be443A4800529",
+            "0x0000000000000000000000000000000000000001",
+            "0xb523AE262D20A936BC152e6023996e46FDC2A95D"
+        ],
+        [
+            "0x6df640f3b8963d8f8358f791f352b8364513f6ab1cca5ed3f1f7b5448980e784",
+            "0x5979D7b546E38E414F7E9822514be443A4800529",
+            "0x0000000000000000000000000000000000000001",
+            "0xb523AE262D20A936BC152e6023996e46FDC2A95D"
+        ],
+        [
+            "0x3fa4252848f9f0a1480be62745a4629d9eb1322aebab8a791e344b3b9c1adcf5",
+            "0x912CE59144191C1204E64559FE8253a0e49E6548",
+            "0x0000000000000000000000000000000000000001",
+            "0xb523AE262D20A936BC152e6023996e46FDC2A95D"
+        ]
+    ]
+}

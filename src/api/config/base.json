@@ -1,7 +1,7 @@
 {
-    "safeBlock": 3,
+    "safeBlock": 1,
     "chainId": 8453,
-    "name": "jasperVault",
+    "name": "base",
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
     "uniswapRouterV2": "0x2626664c2603336E57B271c5C0b26F421741e481",
     "uniswapRouterV3": "0x2626664c2603336E57B271c5C0b26F421741e481",
@@ -10,6 +10,8 @@
     "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
     "bundleUrl": "https://ethgo-arbitrum.fly.dev",
     "rpcUrl": "https://base-mainnet.g.alchemy.com/v2/DiRWMmsF6p2GNC5TLHLHjEyt7p8YjWK_",
+    "subgraphUrl": "https://base.subgraph.jaspervault.io",
+    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
         "DiamondCutFacet": "0x71F2CDc1F56f0f36D1694B210b4258018D529398",

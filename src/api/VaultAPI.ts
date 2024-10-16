@@ -1,13 +1,15 @@
 'use strict';
 import { JVaultConfig, BundlerOP } from '../utils/types/index';
-import { Address, TransactionOverrides } from '../utils/types';
+import { Address, TransactionOverrides, JVaultStatus, Bytes } from '../utils/types';
 import {
     VaultWrapper,
     VaultManageModuleWrapper,
     VaultFactoryWrapper,
     VaultPaymasterWrapper,
     IssuanceModuleWrapper,
-    OptionModuleV2Wrapper
+    OptionModuleV2Wrapper,
+    ManagerWrapper,
+
 } from '../wrappers/';
 import { BigNumber } from 'ethers/lib/ethers';
 import { ethers } from 'ethers';
@@ -22,6 +24,8 @@ export default class OptionTradingAPI {
     private VaultPaymasterWrapper: VaultPaymasterWrapper;
     private IssuanceModuleWrapper: IssuanceModuleWrapper;
     private OptionModuleV2Wrapper: OptionModuleV2Wrapper;
+    private ManagerWrapper: ManagerWrapper;
+
     public constructor(
         config: JVaultConfig,
     ) {
@@ -31,7 +35,30 @@ export default class OptionTradingAPI {
         this.VaultPaymasterWrapper = new VaultPaymasterWrapper(config.ethersSigner, config.data.contractData.VaultPaymaster);
         this.IssuanceModuleWrapper = new IssuanceModuleWrapper(config.ethersSigner, config.data.contractData.IssuanceModule);
         this.OptionModuleV2Wrapper = new OptionModuleV2Wrapper(config.ethersSigner, config.data.contractData.OptionModuleV2);
+        this.ManagerWrapper = new ManagerWrapper(config.ethersSigner, config.data.contractData.Manager);
         this.bundlerHelper = new BundlerHelper(config);
+    }
+
+    /// <summary>
+    /// Initialize a new account
+    /// </summary>
+    /// <returns>Vault 1 Address</returns>
+    public async initNewAccount(): Promise<Address> {
+        const vault1 = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, 1);
+        const code = await this.jVaultConfig.ethersProvider.getCode(vault1);
+        if (code == '0x') {
+            const createAccountTX = await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, 1);
+            if (createAccountTX) {
+                await createAccountTX.wait(this.jVaultConfig.data.safeBlock);
+
+                return vault1;
+            }
+            else {
+                console.error('Error creating account:', createAccountTX);
+                return ethers.constants.AddressZero;
+            }
+        }
+        return vault1;
     }
 
     public async initNewVault(
@@ -124,13 +151,15 @@ export default class OptionTradingAPI {
             const contractData = this.jVaultConfig.data.contractData;
             const calldata_arr: BundlerOP[] = [];
             const modules = [
-                contractData.VaultPaymaster,
+                contractData.VaultFactory,
                 contractData.VaultManageModule,
-                contractData.IssuanceModule,
                 contractData.OptionModuleV2,
+                contractData.IssuanceModule,
+                contractData.PriceOracle,
                 contractData.OptionService,
-                contractData.PriceOracle];
-            const modulesStatus = [true, true, true, true, true, true];
+                contractData.VaultPaymaster,
+            ];
+            const modulesStatus = [true, true, true, true, true, true, true];
             // set moduleType
             console.log('Initializing vault:', vault_addr, type);
             calldata_arr.push({
@@ -178,7 +207,7 @@ export default class OptionTradingAPI {
             const vault1 = await this.bundlerHelper.getSender(1);
             const user_wallet = await this.jVaultConfig.ethersSigner.getAddress();
             if (from == user_wallet) {
-                return await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, txOpts);
+                return await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, false, txOpts);
             }
             else if (to == user_wallet) {
                 return await this.IssuanceModuleWrapper.redeem(vault1, asset_type, asset, amount, txOpts);
@@ -193,7 +222,7 @@ export default class OptionTradingAPI {
         try {
             return this.VaultFactoryWrapper.getWalletToVault(wallet);
         } catch (error) {
-            console.error('Error initializing extension:', error);
+            console.error('Error getWalletToVault:', error);
         }
     }
 
@@ -227,6 +256,35 @@ export default class OptionTradingAPI {
         }
     }
 
+    public async getVaultStatus(vault: Address): Promise<JVaultStatus> {
+        try {
+            const targets: Address[] = [];
+            const data: Bytes[] = [];
+            const managerContract = this.ManagerWrapper.getManagerContract();
+            targets.push(this.jVaultConfig.data.contractData.Manager);
+            data.push(await this.ManagerWrapper.getVaultLock(vault, true));
+
+            targets.push(this.jVaultConfig.data.contractData.Manager);
+            data.push(await this.ManagerWrapper.getVaultAllModules(vault, true));
+
+            targets.push(this.jVaultConfig.data.contractData.Manager);
+            data.push(await this.ManagerWrapper.getVaultAllTokens(vault, true));
+
+            targets.push(this.jVaultConfig.data.contractData.Manager);
+            data.push(await this.ManagerWrapper.getVaultType(vault, true));
+
+            const result = await this.ManagerWrapper.multiCall(targets, data);
+            return {
+                isLocked: managerContract.interface.decodeFunctionResult('getVaultLock', result[0])[0],
+                modules: managerContract.interface.decodeFunctionResult('getVaultAllModules', result[1])[0],
+                tokens: managerContract.interface.decodeFunctionResult('getVaultAllTokens', result[2])[0],
+                type: managerContract.interface.decodeFunctionResult('getVaultType', result[3])[0],
+            };
+        } catch (error) {
+            console.error('Error getting vault status:', error);
+        }
+    }
+
     public async getWalletPaymasterBalance(wallet: Address) {
         try {
             return await this.VaultPaymasterWrapper.getWalletPaymasterBalance(wallet);
@@ -234,6 +292,7 @@ export default class OptionTradingAPI {
             console.error('Error getting wallet paymaster balance:', error);
         }
     }
+
     public async createNewVault(wallet: Address, txOpts: TransactionOverrides = {}): Promise<Address> {
         try {
             const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(wallet);
@@ -294,4 +353,5 @@ export default class OptionTradingAPI {
             console.error('Error getOptionWriterSettings:', error);
         }
     }
+
 }

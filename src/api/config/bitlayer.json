@@ -1,0 +1,101 @@
+{
+    "safeBlock": 1,
+    "chainId": 200901,
+    "name": "bitlayer",
+    "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+    "uniswapRouterV2": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
+    "uniswapRouterV3": "0xE592427A0AEce92De3Edee1F18E0157C05861564",
+    "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+    "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
+    "pythPriceFeedAddr": "",
+    "bundleUrl": "https://bundler.particle.network",
+    "rpcUrl": "https://rpc.bitlayer.org",
+    "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
+    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
+    "contractData": {
+        "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "DiamondCutFacet": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
+        "DiamondLoupeFacet": "0xfE1718b86BfA03Bd52d8e31F8F6ea37F44eD8E44",
+        "OwnershipFacet": "0xf6b3299a9E2be4eD3859Eb9B3DF9831FBC45261e",
+        "Diamond": "0x32CE600C20Ce6C6f68F4F81B547c4edcAB11840d",
+        "PlatformFacet": "0x34328baf6BC36609D10944a5B6Cd4b580CE59D79",
+        "VaultFacet": "0xc8bf340180C72bf17E3002e252A35B0BEB7cACa5",
+        "OptionFacet": "0x8e81aC9afC2a158a7550Ec616A999b55A65E18A2",
+        "OptionFacetV2": "0x90d7b52487997Dca7e4B4F991BA66404321D7e3e",
+        "PaymasterFacet": "0xfce8C16411d205D87B993E18308ee9BF59874e39",
+        "IssuanceFacet": "0x61Ac9e947918F1da8B4103C9F89E084Fe491d3d1",
+        "VaultPaymaster": "0x9F781FDa6Cdf7a339aF514d0F5E16f6b2b2E5836",
+        "VaultManageModule": "0xBea48CA3AaC57D570a9054CC374D2F01c2Bc48Ed",
+        "TradeModule": "0x88EEd20e8a5Fb4bE8A4B53CDeeFC67BB91047f2D",
+        "IssuanceModule": "0xe7D79A3a17730f340Cc594868a55B80F4c0c3138",
+        "Manager": "0xeF0Abec11456846964D59141FD6961cC5F7AD010",
+        "PriceOracle": "0x8690759b04916466B20C5b67d6ccF9743B3f99de",
+        "OptionService": "0xdaC0bE32467348ea71654d2A5aAe7793d065191f",
+        "OptionModule": "0xE632D208e2F1561414E4a8442f8e20614Faa6CE6",
+        "OptionModuleV2": "0xEcb1233E463Aa6cf6Ac0970D5643935A929fFad9",
+        "UniswapV2ExchangeAdapter": "0x1B44c8d71DFC49e42e224c6D4EB7FDe00498dd3f",
+        "UniswapV3ExchangeAdapter": "0x94d0d676dDF1eFf0f234F5Dfe7371100acF2BC8C",
+        "PythOracleAdapter": "0xe1099a130A41B7a45Bc0e107714f98b18Fded40B",
+        "ChainLinkOracleAdapter": "0x6C7e7176e594eD05b506930bd2e06370E8f5cb70",
+        "TradingCreditPool": "0xc8d8A3BdEEEdE5D03e5D80c8C82aF163C9Af923a",
+        "JVTB": "0x4D2c31293A1Ca7a411fF5EaD6B272F96b1fDB860",
+        "NFTFreeOptionPool": "0xbfc2bce6c3e071986927264F889B07dD6a2D8dE2",
+        "VaultFactoryV2": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE",
+        "VaultFactory": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE"
+    },
+    "tokens": [
+        {
+            "name": "btc",
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "type": 1
+        },
+        {
+            "name": "usdc",
+            "address": "0x9827431e8b77e87c9894bd50b055d6be56be0030",
+            "type": 1
+        },
+        {
+            "name": "usdt",
+            "address": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2",
+            "type": 1
+        },
+        {
+            "name": "weth",
+            "address": "0xef63d4e178b3180beec9b0e143e0f37f4c93f4c2",
+            "type": 1
+        },
+        {
+            "name": "wbtc",
+            "address": "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+            "type": 1
+        }
+    ],
+    "chainLink": [
+        {
+            "usdc": "0x9827431e8b77e87c9894bd50b055d6be56be0030",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0xf5e97CB35f333fa355BA305918e2e96707eC64c6"
+        },
+        {
+            "usdt": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x53Acd5dc5D3a749C49442B29990d9b3b1D2249A5"
+        },
+        {
+            "weth": "0x135CFfA0b743c8519ebCdBb5FA1a7c89333999fb",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x6D783a5314b70504dF2A35a59Cf3BEAA6D48CFd1"
+        },
+        {
+            "btc": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x29304f0c6fd0db604312d6e982164e1e7c3adad9"
+        },
+        {
+            "wbtc": "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
+            "usd": "0x0000000000000000000000000000000000000001",
+            "oracle": "0x29304f0c6fd0db604312d6e982164e1e7c3adad9"
+        }
+    ],
+    "pyth": []
+}

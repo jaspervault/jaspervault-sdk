@@ -16,7 +16,7 @@ export default class VaultFactoryWrapper {
   public async getWalletToVault(wallet: Address) {
     try {
       const vaultFactory = this.contracts.getVaultFactory(this.VaultFactoryAddress);
-      return vaultFactory.getWalletToVault(wallet);
+      return await vaultFactory.getWalletToVault(wallet);
     } catch (error) {
       console.error('Error initializing extension:', error);
     }
@@ -24,7 +24,7 @@ export default class VaultFactoryWrapper {
   public async getAddress(wallet: Address, index: number) {
     try {
       const vaultFactory = this.contracts.getVaultFactory(this.VaultFactoryAddress);
-      return vaultFactory.getAddress(wallet, index);
+      return await vaultFactory.getAddress(wallet, index);
     } catch (error) {
       console.error('Error getAddress:', error);
     }
@@ -32,7 +32,7 @@ export default class VaultFactoryWrapper {
   public async getVaultToSalt(vault: Address) {
     try {
       const vaultFactory = this.contracts.getVaultFactory(this.VaultFactoryAddress);
-      return vaultFactory.getVaultToSalt(vault);
+      return await vaultFactory.getVaultToSalt(vault);
     } catch (error) {
       console.error('Error getVaultToSalt:', error);
     }
@@ -40,7 +40,7 @@ export default class VaultFactoryWrapper {
   public async getVaultMaxSalt(wallet: Address) {
     try {
       const vaultFactory = this.contracts.getVaultFactory(this.VaultFactoryAddress);
-      return vaultFactory.getVaultMaxSalt(wallet);
+      return await vaultFactory.getVaultMaxSalt(wallet);
     } catch (error) {
       console.error('Error getVaultMaxSalt:', error);
     }

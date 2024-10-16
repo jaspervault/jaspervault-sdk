@@ -2,9 +2,16 @@ import { Provider } from '@ethersproject/providers';
 import { Signer } from '@ethersproject/abstract-signer';
 import { BigNumber, BytesLike } from 'ethers';
 import { provider as Web3CoreProvider } from 'web3-core';
-
+import { TransactionHandler } from '../JaspervaultTransactionHandler';
 
 export { TransactionReceipt } from 'ethereum-types';
+
+export interface JVaultStatus {
+  isLocked: boolean;
+  modules: Address[];
+  tokens: Address[];
+  type: number;
+}
 
 export interface JVaultConfig {
   EOA: Address;
@@ -14,6 +21,7 @@ export interface JVaultConfig {
   network: string;
   isTest?: boolean;
   data?: NetworkConfig;
+  transactionHandler?: TransactionHandler;
 }
 
 export interface SignedPrice {
@@ -66,6 +74,19 @@ export interface JVaultOrder {
   expiry?: Date;
   secondsToExpiry?: number;
   chainId?: number;
+  paymasterSettings?: {
+    paymaster: Address;
+    paymasterFee: BigNumber;
+  };
+}
+
+export interface BundlerEstimate {
+  'sender': Address;
+  'nonce': string;
+  'initCode': string;
+  'callData': string;
+  'signature': string;
+
 }
 
 export interface BundlerOP {
@@ -91,8 +112,10 @@ export interface NetworkConfig {
   eth: Address;
   weth: Address;
   pythPriceFeedAddr: Address;
+  optionQuotesUrl: string;
   bundleUrl: Address;
   rpcUrl: string;
+  subgraphUrl: string;
   tokens: Token[];
   pyth: string[][];
   contractData: {
@@ -114,6 +137,7 @@ export interface NetworkConfig {
     VaultFactory: Address;
     OptionService: Address;
     PriceOracle: Address;
+    Manager: Address;
   };
 }
 export interface TransactionOverrides {
@@ -125,6 +149,7 @@ export interface TransactionOverrides {
   type?: number;
   customData?: Record<string, any>;
   ccipReadEnabled?: boolean;
+  value?: BigNumber | Promise<BigNumber>;
 }
 export interface OptionOrderDetail {
   id: string;

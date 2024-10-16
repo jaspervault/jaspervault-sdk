@@ -17,18 +17,30 @@
     },
     "base": {
         "CALL": {
-            "ETH": "0x37a4f273B341C077230aA2d967590b8a74D37598"
+            "ETH": "0x37a4f273B341C077230aA2d967590b8a74D37598",
+            "cbBTC": "0x71c44CF5Ca04b1a2a1A5bA93081DA89183AAc0b6"
         },
         "PUT": {
-            "ETH": "0x448A6CD6c9b0F4Af691925BEf78fBB8f964aA0aa"
+            "ETH": "0x448A6CD6c9b0F4Af691925BEf78fBB8f964aA0aa",
+            "cbBTC": "0x97cDCF310653a2Cbefee479adE77AD8D3De99dF1"
         }
     },
     "base_uat": {
         "CALL": {
-            "ETH": "0x37a4f273B341C077230aA2d967590b8a74D37598"
+            "ETH": "0x71c44CF5Ca04b1a2a1A5bA93081DA89183AAc0b6",
+            "cbBTC": "0x71c44CF5Ca04b1a2a1A5bA93081DA89183AAc0b6"
         },
         "PUT": {
-            "ETH": "0x448A6CD6c9b0F4Af691925BEf78fBB8f964aA0aa"
+            "ETH": "0x97cDCF310653a2Cbefee479adE77AD8D3De99dF1",
+            "cbBTC": "0x97cDCF310653a2Cbefee479adE77AD8D3De99dF1"
+        }
+    },
+    "bitlayer": {
+        "CALL": {
+            "BTC": "0x419ee3EBA38d6c4b9F079eBFca2b7C51F137081f"
+        },
+        "PUT": {
+            "BTC": "0x887e4fc820323CF72aeD60b15118A7711Ff07081"
         }
     }
 }

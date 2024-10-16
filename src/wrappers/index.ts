@@ -9,7 +9,8 @@ import VaultManageModuleWrapper from './VaultManageModuleWrapper';
 import VaultWrapper from './VaultWrapper';
 import VaultPaymasterWrapper from './VaultPaymasterWrapper';
 import PriceOracleWrapper from './PriceOracleWrapper';
-
+import ManagerWrapper from './ManagerWrapper';
+import ERC20Wrapper from './ERC20Wrapper';
 export {
     EntryPointWrapper,
     VaultPaymasterWrapper,
@@ -20,5 +21,7 @@ export {
     OptionModuleV2Wrapper,
     OptionServiceWrapper,
     VaultManageModuleWrapper,
-    PriceOracleWrapper
+    PriceOracleWrapper,
+    ManagerWrapper,
+    ERC20Wrapper
 };

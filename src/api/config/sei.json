@@ -1,7 +1,7 @@
 {
     "safeBlock": 10,
     "chainId": 1329,
-    "name": "jasperVault",
+    "name": "sei",
     "version": "2.0.0",
     "entryPoint": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
     "uniswapRouterV2": "0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506",
@@ -12,6 +12,7 @@
     "usd": "0x0000000000000000000000000000000000000001",
     "bundleUrl": "https://ethgo-sei.fly.dev",
     "positionTypeCount": 6,
+    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
         "ERC20TOKEN": "0x32CE600C20Ce6C6f68F4F81B547c4edcAB11840d",
