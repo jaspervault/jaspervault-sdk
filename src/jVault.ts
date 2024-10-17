@@ -4,9 +4,36 @@ import {
     OptionTradingAPI,
     VaultAPI
 } from './api/index';
-import fs from 'fs';
-import path from 'path';
-import { NetworkConfig } from './utils/types/index';
+
+import { NetworkConfig, Token } from './utils/types/index';
+
+// Import configuration files
+import arbitrumConfig from './api/config/arbitrum.json';
+import baseUatConfig from './api/config/base_uat.json';
+import baseConfig from './api/config/base.json';
+import bitlayerConfig from './api/config/bitlayer.json';
+import bnbConfig from './api/config/bnb.json';
+import seiConfig from './api/config/sei.json';
+
+// Helper function to convert token format
+function convertTokens(tokens: any[]): Token[] {
+    return tokens.map(token => ({
+        ...token,
+        symbol: token.name, // Assuming 'name' can be used as 'symbol'
+        decimals: 18, // Default to 18 decimals, adjust if needed
+    }));
+}
+
+// Helper function to ensure NetworkConfig compatibility
+function ensureNetworkConfig(config: any): NetworkConfig {
+    return {
+        ...config,
+        tokens: convertTokens(config.tokens),
+        pythPriceFeedAddr: config.pythPriceFeedAddr || config.pythAddr || '',
+        rpcUrl: config.rpcUrl || '',
+        subgraphUrl: config.subgraphUrl || '',
+    };
+}
 
 class JVault {
     public OptionTradingAPI: OptionTradingAPI;
@@ -29,20 +56,21 @@ class JVault {
     }
 
     static readNetworkConfig(networkName: string): NetworkConfig {
-        const filePath = path.join(__dirname, `/api/config/${networkName}.json`);
-        if (!fs.existsSync(filePath)) {
-            throw new Error(`Network configuration file for ${networkName} not found in ` + filePath);
+        const configs: { [key: string]: NetworkConfig } = {
+            arbitrum: ensureNetworkConfig(arbitrumConfig),
+            base_uat: ensureNetworkConfig(baseUatConfig),
+            base: ensureNetworkConfig(baseConfig),
+            bitlayer: ensureNetworkConfig(bitlayerConfig),
+            bnb: ensureNetworkConfig(bnbConfig),
+            sei: ensureNetworkConfig(seiConfig),
+        };
+
+        if (!(networkName in configs)) {
+            throw new Error(`Network configuration for ${networkName} not found`);
         }
-        try {
-            const data = fs.readFileSync(filePath, 'utf8');
-            return JSON.parse(data) as NetworkConfig;
-        } catch (error) {
-            throw new Error(`Error reading the network config file: ${error.message}`);
-        }
+
+        return configs[networkName];
     }
-
-
 }
-
 
 export default JVault;
