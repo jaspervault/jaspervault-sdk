@@ -113,7 +113,6 @@ export interface NetworkConfig {
   weth: Address;
   pythPriceFeedAddr: Address;
   optionQuotesUrl: string;
-  bundleUrl: Address;
   rpcUrl: string;
   subgraphUrl: string;
   tokens: Token[];

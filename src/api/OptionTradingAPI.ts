@@ -13,7 +13,6 @@ import {
 } from '../wrappers/';
 import { IOptionModuleV2 } from '@jaspervault/contracts-v2/dist/types/typechain/contracts/modules/OptionModuleV2';
 import { BigNumber, ethers } from 'ethers';
-import BundlerHelper from '../utils/BundlerHelper';
 import axios from 'axios';
 import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/';
@@ -26,7 +25,6 @@ interface VaultResult {
 }
 export default class OptionTradingAPI {
     private jVaultConfig: JVaultConfig;
-    private bundlerHelper: BundlerHelper;
     private OptionModuleV2Wrapper: OptionModuleV2Wrapper;
     private PriceOracleWrapper: PriceOracleWrapper;
     private OptionServiceWrapper: OptionServiceWrapper;
@@ -40,7 +38,6 @@ export default class OptionTradingAPI {
         config: JVaultConfig
     ) {
         this.jVaultConfig = config;
-        this.bundlerHelper = new BundlerHelper(config);
         this.OptionModuleV2Wrapper = new OptionModuleV2Wrapper(config.ethersSigner, config.data.contractData.OptionModuleV2);
         this.PriceOracleWrapper = new PriceOracleWrapper(config.ethersSigner, config.data.contractData.PriceOracle);
         this.OptionServiceWrapper = new OptionServiceWrapper(config.ethersSigner, config.data.contractData.OptionService);
@@ -423,7 +420,7 @@ export default class OptionTradingAPI {
                 true),
         });
         try {
-            return await this.bundlerHelper.sendtoVault(JVaultOrder.optionVault, calldata_arr, txOpts);
+            return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
         }
         catch (error) {
             console.error('Error liquidateOrder:', error);

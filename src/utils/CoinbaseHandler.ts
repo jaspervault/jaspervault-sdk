@@ -6,10 +6,10 @@ import { AxiosResponse } from 'axios';
 import axios from 'axios';
 import sleep from 'sleep-promise';
 import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/';
-import { ethers } from 'ethers';
+import { ethers, BigNumber } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 import { Signer } from '@ethersproject/abstract-signer';
-
+import { FeeData } from '@ethersproject/abstract-provider';
 import { TransactionHandler } from './JaspervaultTransactionHandler';
 
 export interface CoinbaseSettings {
@@ -82,10 +82,22 @@ class CoinbaseHandler implements TransactionHandler {
 
         const Vault = new VaultWrapper(this.settings.ethersSigner, vault);
         const calldata = await Vault.executeBatch(dest, value, func, true);
-        // const feeData: FeeData = await this.config.ethersProvider.getFeeData();
-        // const {
-        //    maxPriorityFeePerGas, lastBaseFeePerGas
-        // } = feeData
+
+        let maxFeePerGas = txOpts.maxFeePerGas;
+        let maxPriorityFeePerGas = txOpts.maxPriorityFeePerGas;
+        if (!maxFeePerGas || !maxPriorityFeePerGas) {
+            const ethersFeeData: FeeData = await this.settings.ethersProvider.getFeeData();
+            maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('120')).div(BigNumber.from('100'));
+            if (ethersFeeData.lastBaseFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
+                console.log('lastBaseFeePerGas too low--->', ethers.utils.formatUnits(ethersFeeData.lastBaseFeePerGas, 'gwei'));
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('120')).div(BigNumber.from('100'));
+                maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('150')).div(BigNumber.from('100'));
+
+            }
+            else {
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('60')).div(BigNumber.from('100'));
+            }
+        }
         const unsignOp = {
             sender: vault,
             nonce: nonce,
@@ -93,9 +105,8 @@ class CoinbaseHandler implements TransactionHandler {
             callData: calldata,
             callGasLimit: 3500000,
             verificationGasLimit: 500000,
-            maxFeePerGas: txOpts.maxFeePerGas,
-            maxPriorityFeePerGas: txOpts.maxPriorityFeePerGas,
-            // paymasterAndData: "0x",
+            maxFeePerGas: maxFeePerGas,
+            maxPriorityFeePerGas: maxPriorityFeePerGas,
             paymasterAndData: '0x',
             preVerificationGas: 500000,
             signature: '0x8a1e1504ab48d24cc6cb0ed990d94330297d857b4fd90aba9c3fae0adb80d10c76f2cfd253627baca1630e797e94864c29637846e7d8f18728d1fb481a89f5791c',
@@ -143,6 +154,8 @@ class CoinbaseHandler implements TransactionHandler {
             return;
         }
         console.log('estimate gas', res.data.result);
+        const preVerificationGas = parseInt((res.data.result.preVerificationGas * 1.2).toString());
+        userOp.preVerificationGas = this.toHex(preVerificationGas);
         userOp.verificationGasLimit = this.toHex(res.data.result.verificationGasLimit);
         userOp.callGasLimit = this.toHex(res.data.result.callGasLimit);
 

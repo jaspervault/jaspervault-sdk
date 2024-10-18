@@ -55,7 +55,7 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        // transactionHandler: coinbaseHandler
+        transactionHandler: coinbaseHandler
     };
 
     jVault_holder = new JVault(config_holder);

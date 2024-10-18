@@ -8,7 +8,6 @@
     "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     "weth": "0x4200000000000000000000000000000000000006",
     "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
-    "bundleUrl": "https://ethgo-arbitrum.fly.dev",
     "rpcUrl": "https://mainnet.base.org",
     "subgraphUrl": "https://subgraph.satsuma-prod.com/aadc715bba17/jaspervault--199516/jaspervault-base-uat/api",
     "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",

@@ -8,7 +8,6 @@
     "eth": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     "pythPriceFeedAddr": "",
-    "bundleUrl": "https://bundler.particle.network",
     "rpcUrl": "https://rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
     "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
