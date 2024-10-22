@@ -147,7 +147,6 @@ class CoinbaseHandler implements TransactionHandler {
             'id': 1,
             'jsonrpc': '2.0',
         };
-        console.log(estimateOp_options);
         let res = await axios.post(bundlerUrl, estimateOp_options);
         if (res.data.error) {
             console.log('eth_estimateUserOperationGas error: ', res.data);
@@ -182,7 +181,6 @@ class CoinbaseHandler implements TransactionHandler {
 
         const op = await this.accountAPI.signUserOp(userOp);
 
-        console.log(op);
         const options = {
             'method': 'eth_sendUserOperation',
             'params': [{
@@ -205,7 +203,6 @@ class CoinbaseHandler implements TransactionHandler {
 
         console.log('bundlerUrl', bundlerUrl);
         res = await axios.post(bundlerUrl, options);
-        console.log(res);
         if (res.data.error) {
             console.log('eth_sendUserOperation error: ', res.data);
             // var dataField = JSON.parse(res.data.error.message.match(/{.*?}$/)[0]).error.data;
@@ -215,7 +212,6 @@ class CoinbaseHandler implements TransactionHandler {
         const tx = await this.getUserOpByHash(res);
         await tx.wait(1);
         console.log('<tx hash>', tx.hash);
-        txOpts;
         return tx.hash;
     }
     async getUserOpByHash(res, timeout = 30, interval = 2) {

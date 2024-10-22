@@ -2,7 +2,8 @@
 import { JVaultConfig, Address } from './utils/types/index';
 import {
     OptionTradingAPI,
-    VaultAPI
+    VaultAPI,
+    BlockchainAPI
 } from './api/index';
 
 import { NetworkConfig, Token } from './utils/types/index';
@@ -38,12 +39,14 @@ function ensureNetworkConfig(config: any): NetworkConfig {
 class JVault {
     public OptionTradingAPI: OptionTradingAPI;
     public VaultAPI: VaultAPI;
+    public BlockchainAPI: BlockchainAPI;
     public EOA: Address;
     public config: JVaultConfig;
     constructor(config: JVaultConfig) {
         this.config = this.initConfig(config);
         this.OptionTradingAPI = new OptionTradingAPI(this.config);
         this.VaultAPI = new VaultAPI(this.config);
+        this.BlockchainAPI = new BlockchainAPI(this.config);
         this.EOA = this.config.EOA;
     }
     public initConfig(config: JVaultConfig): JVaultConfig {

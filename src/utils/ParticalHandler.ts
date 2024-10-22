@@ -63,7 +63,6 @@ class ParticalHandler implements TransactionHandler {
 
         op_arr.forEach(element => {
             dest.push(element.dest);
-            console.log(element.value);
             value.push(element.value);
             vaule_tx = vaule_tx.add(element.value);
             func.push(element.data);
@@ -95,7 +94,6 @@ class ParticalHandler implements TransactionHandler {
             verificationGasLimit: 500000,
             maxFeePerGas: txOpts.maxFeePerGas,
             maxPriorityFeePerGas: txOpts.maxPriorityFeePerGas,
-            // paymasterAndData: "0x",
             paymasterAndData: '0x',
             preVerificationGas: 500000,
             signature: '0x',
@@ -117,7 +115,46 @@ class ParticalHandler implements TransactionHandler {
             'preVerificationGas': this.toHex(unsignOp.preVerificationGas),
             'signature': unsignOp.signature,
         };
-        let res = await axios.post(paymasterUrl,
+
+        const estimateOp_options = {
+            'method': 'eth_estimateUserOperationGas',
+            'params': [{
+                'sender': await userOp.sender,
+                'nonce': await userOp.nonce,
+                'initCode': await userOp.initCode,
+                'callData': await userOp.callData,
+                'signature': await userOp.signature,
+            }, entryPoint],
+            'id': 1,
+            'jsonrpc': '2.0',
+            'chainId': chainID,
+        };
+        let res = await axios.post(`${this.settings.data.bundlerUrl}#eth_estimateUserOperationGas`, estimateOp_options);
+        if (res.data.error) {
+            console.log('eth_estimateUserOperationGas error: ', res.data);
+            return;
+        }
+
+        userOp.preVerificationGas = this.toHex(res.data.result.preVerificationGas);
+        userOp.verificationGasLimit = this.toHex(res.data.result.verificationGasLimit);
+        userOp.callGasLimit = this.toHex(res.data.result.callGasLimit);
+        let maxFeePerGas = txOpts.maxFeePerGas;
+        let maxPriorityFeePerGas = txOpts.maxPriorityFeePerGas;
+        // if (maxFeePerGas) {
+        //     console.log(maxFeePerGas)
+        //     console.log(ethers.utils.formatUnits(maxFeePerGas, 'gwei'));
+        //     console.log(ethers.utils.formatUnits(maxPriorityFeePerGas, 'gwei'));
+        //     console.log(ethers.utils.formatUnits(res.data.result.maxFeePerGas, 'gwei'));
+        //     console.log(ethers.utils.formatUnits(res.data.result.maxPriorityFeePerGas, 'gwei'));
+        // }
+        if (!maxFeePerGas || !maxPriorityFeePerGas) {
+            maxFeePerGas = res.data.result.maxFeePerGas;
+            maxPriorityFeePerGas = res.data.result.maxPriorityFeePerGas;
+        }
+        userOp.maxFeePerGas = this.toHex(maxFeePerGas);
+        userOp.maxPriorityFeePerGas = this.toHex(maxPriorityFeePerGas);
+
+        res = await axios.post(paymasterUrl,
             {
                 method: 'pm_sponsorUserOperation',
                 params: [userOp, entryPoint],
@@ -135,7 +172,6 @@ class ParticalHandler implements TransactionHandler {
         }
 
         userOp.paymasterAndData = res.data.result.paymasterAndData;
-        console.log(userOp);
         const op = await this.accountAPI.signUserOp(userOp);
 
         const options = {
@@ -157,10 +193,8 @@ class ParticalHandler implements TransactionHandler {
             'jsonrpc': '2.0',
             'chainId': chainID,
         };
-        console.log(options);
-        const bundlerUrl = `${this.settings.data.bundlerUrl}#eth_sendUserOperation`;
-        console.log('bundlerUrl', bundlerUrl);
-        res = await axios.post(bundlerUrl, options);
+
+        res = await axios.post(`${this.settings.data.bundlerUrl}#eth_sendUserOperation`, options);
         if (res.data.error) {
             console.log('eth_sendUserOperation error: ', res.data);
             // var dataField = JSON.parse(res.data.error.message.match(/{.*?}$/)[0]).error.data;

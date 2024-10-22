@@ -7,6 +7,7 @@ import {
     IssuanceModuleWrapper,
     OptionModuleV2Wrapper,
     ManagerWrapper,
+    ERC20Wrapper
 
 } from '../wrappers/';
 import { BigNumber } from 'ethers/lib/ethers';
@@ -73,18 +74,50 @@ export default class OptionTradingAPI {
     ): Promise<string | any> {
         try {
             const asset_type: BigNumber[] = [];
+            const calldata_arr: BundlerOP[] = [];
+            let value = ethers.constants.Zero;
             for (let i = 0; i < asset.length; i++) {
                 asset_type.push(BigNumber.from(1));
             }
             const vault1 = await this.initNewAccount();
             const user_wallet = await this.jVaultConfig.ethersSigner.getAddress();
+            for (let i = 0; i < asset.length; i++) {
+                if (asset[i] != this.jVaultConfig.data.eth) {
+                    const erc20wrapper = new ERC20Wrapper(this.jVaultConfig.ethersSigner, asset[i]);
+                    const allowance = await erc20wrapper.allowance(user_wallet, vault1);
+                    if (allowance.lt(amount[i])) {
+                        await (await erc20wrapper.approve(vault1, amount[i])).wait(this.jVaultConfig.data.safeBlock);
+                    }
+                }
+                else {
+                    value = value.add(amount[i]);
+                }
+            }
             if (from == user_wallet) {
-                return await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, false, txOpts);
+                calldata_arr.push({
+                    dest: this.jVaultConfig.data.contractData.IssuanceModule,
+                    value: value,
+                    data: await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, true, txOpts),
+                });
+                if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
+                    return await this.TransactionHandler.sendTransaction(ethers.constants.AddressZero, calldata_arr, txOpts);
+                } else {
+                    return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
+                }
             }
             else if (to == user_wallet) {
-                return await this.IssuanceModuleWrapper.redeem(vault1, asset_type, asset, amount, txOpts);
+                calldata_arr.push({
+                    dest: this.jVaultConfig.data.contractData.IssuanceModule,
+                    value: ethers.constants.Zero,
+                    data: await this.IssuanceModuleWrapper.redeem(vault1, asset_type, asset, amount, true, txOpts),
+                });
+                if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
+                    return await this.TransactionHandler.sendTransaction(ethers.constants.AddressZero, calldata_arr, txOpts);
+                }
+                else {
+                    return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
+                }
             }
-
         } catch (error) {
             console.error('Error transfering vault:', error);
         }

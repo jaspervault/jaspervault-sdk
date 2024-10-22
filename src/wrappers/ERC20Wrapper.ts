@@ -52,4 +52,44 @@ export default class ERC20Wrapper {
             console.error('Error getting allowance:', error);
         }
     }
+
+    public async name(): Promise<string> {
+        try {
+            const erc20 = await this.contracts.getERC20(this.ERC20Address);
+            return erc20.name();
+        }
+        catch (error) {
+            console.error('Error getting name:', error);
+        }
+    }
+
+    public async symbol(): Promise<string> {
+        try {
+            const erc20 = await this.contracts.getERC20(this.ERC20Address);
+            return erc20.symbol();
+        }
+        catch (error) {
+            console.error('Error getting symbol:', error);
+        }
+    }
+
+    public async decimals(): Promise<number> {
+        try {
+            const erc20 = await this.contracts.getERC20(this.ERC20Address);
+            return erc20.decimals();
+        }
+        catch (error) {
+            console.error('Error getting decimals:', error);
+        }
+    }
+
+    public async totalSupply(): Promise<Uint256> {
+        try {
+            const erc20 = await this.contracts.getERC20(this.ERC20Address);
+            return erc20.totalSupply();
+        }
+        catch (error) {
+            console.error('Error getting total supply:', error);
+        }
+    }
 }

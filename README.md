@@ -135,6 +135,69 @@ The code below demonstrates how to check if a vault exists and how to create a n
 
 ```
 
+## Move asset between your EOA and your vault
+
+```typescript
+async function depositERC20(token_address: string, amount: string) {
+    let decimals = await jVault_holder.BlockchainAPI.getDecimalsAsync(token_address);
+    let depositAmount = ethers.utils.parseUnits(amount, decimals);
+    let depositTx = await jVault_holder.VaultAPI.transfer(
+        config_holder.EOA,
+        await jVault_holder.VaultAPI.getAddress(jVault_holder.config.EOA, 1),
+        [token_address],
+        [depositAmount],
+        {
+            maxFeePerGas: feeData.lastBaseFeePerGas?.mul(110).div(100)?.add(ethers.utils.parseUnits('0.001', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+        });
+    return depositTx;
+}
+
+async function depositETH(amount: string) {
+    let depositAmount = ethers.utils.parseEther(amount);
+    let depositTx = await jVault_holder.VaultAPI.transfer(
+        config_holder.EOA,
+        await jVault_holder.VaultAPI.getAddress(jVault_holder.config.EOA, 1),
+        [jVault_holder.config.data.eth],
+        [depositAmount],
+        {
+            maxFeePerGas: feeData.lastBaseFeePerGas?.mul(110).div(100)?.add(ethers.utils.parseUnits('0.001', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+        });
+    return depositTx;
+}
+
+async function withdrawERC20(token_address: string, amount: string) {
+    let decimals = await jVault_holder.BlockchainAPI.getDecimalsAsync(token_address);
+    let withdrawAmount = ethers.utils.parseUnits(amount, decimals);
+    let withdrawTx = await jVault_holder.VaultAPI.transfer(
+        await jVault_holder.VaultAPI.getAddress(jVault_holder.config.EOA, 1),
+        config_holder.EOA,
+        [token_address], [withdrawAmount],
+        {
+            maxFeePerGas: feeData.lastBaseFeePerGas?.mul(110).div(100)?.add(ethers.utils.parseUnits('0.001', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+        });
+    return withdrawTx;
+}
+
+async function withdrawETH(amount: string) {
+    let withdrawAmount = ethers.utils.parseEther(amount);
+    let withdrawTx = await jVault_holder.VaultAPI.transfer(
+        await jVault_holder.VaultAPI.getAddress(jVault_holder.config.EOA, 1),
+        config_holder.EOA,
+        [jVault_holder.config.data.eth],
+        [withdrawAmount],
+        {
+            maxFeePerGas: feeData.lastBaseFeePerGas?.mul(110).div(100)?.add(ethers.utils.parseUnits('0.001', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+        });
+    return withdrawTx;
+}
+
+
+```
+
 ## Execute Your First Transaction
 
 Let's create your first transaction

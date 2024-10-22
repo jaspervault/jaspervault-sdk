@@ -100,7 +100,6 @@ export default class OptionTradingAPI {
         JVaultOrder: JVaultOrder,
         txOpts: TransactionOverrides = {}
     ) {
-        txOpts;
         const calldata_arr: BundlerOP[] = [];
         const newVaultResult = await this.checkAccount(JVaultOrder);
         calldata_arr.push(...newVaultResult.bundlerOP);
@@ -114,7 +113,6 @@ export default class OptionTradingAPI {
         }
         calldata_arr.push(...await this.submitOrder(JVaultOrder));
         try {
-            console.log('JVaultOrder', JVaultOrder, txOpts);
             return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
             //   return await this.bundlerHelper.sendtoVault(JVaultOrder.premiumVault, calldata_arr, txOpts);
         }

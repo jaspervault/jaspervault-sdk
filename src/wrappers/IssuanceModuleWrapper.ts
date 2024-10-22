@@ -64,40 +64,65 @@ export default class IssuanceModuleWrapper {
         }
     }
 
-    public async issueAndProxy(vault_addr: Address,
+    public async issueAndProxy(
+        vault_addr: Address,
         assets_addr: Address[],
         amounts: Uint256[],
+        encodeFunc?: boolean,
         txOpts: TransactionOverrides = {}) {
         try {
             const issuanceModule = await this.contracts.getIssuanceModule(this.IssuanceModuleAddress);
-            return issuanceModule.issueAndProxy(vault_addr, assets_addr, amounts, txOpts);
+            if (encodeFunc) {
+                return issuanceModule.interface.encodeFunctionData('issueAndProxy', [vault_addr, assets_addr, amounts]);
+            }
+            else {
+                return issuanceModule.issueAndProxy(vault_addr, assets_addr, amounts, txOpts);
+            }
         }
         catch (error) {
-            console.error('Error initializing extension:', error);
+            console.error('Error issueAndProxy:', error);
         }
     }
 
-    public async redeem(vault_addr: Address,
-        assets_type: Uint256[], assets_addr: Address[], amounts: Uint256[], txOpts: TransactionOverrides = {}): Promise<any> {
-        try {
-            const issuanceModule = await this.contracts.getIssuanceModule(this.IssuanceModuleAddress);
-            return issuanceModule.redeem(vault_addr, assets_type, assets_addr, amounts, txOpts);
-        }
-        catch (error) {
-            console.error('Error initializing extension:', error);
-        }
-    }
-
-    public async redeemProxy(vault_addr: Address,
+    public async redeem(
+        vault_addr: Address,
         assets_type: Uint256[],
-        assets_addr: Address[], amounts: Uint256[],
+        assets_addr: Address[],
+        amounts: Uint256[],
+        encodeFunc?: boolean,
+        txOpts: TransactionOverrides = {}): Promise<any> {
+        try {
+            const issuanceModule = await this.contracts.getIssuanceModule(this.IssuanceModuleAddress);
+            if (encodeFunc) {
+                return issuanceModule.interface.encodeFunctionData('redeem', [vault_addr, assets_type, assets_addr, amounts]);
+            }
+            else {
+                return issuanceModule.redeem(vault_addr, assets_type, assets_addr, amounts, txOpts);
+            }
+        }
+        catch (error) {
+            console.error('Error redeem', error);
+        }
+    }
+
+    public async redeemProxy(
+        vault_addr: Address,
+        assets_type: Uint256[],
+        assets_addr: Address[],
+        amounts: Uint256[],
+        encodeFunc?: boolean,
         txOpts: TransactionOverrides = {}) {
         try {
             const issuanceModule = await this.contracts.getIssuanceModule(this.IssuanceModuleAddress);
-            issuanceModule.redeemProxy(vault_addr, assets_type, assets_addr, amounts, txOpts);
+            if (encodeFunc) {
+                return issuanceModule.interface.encodeFunctionData('redeemProxy', [vault_addr, assets_type, assets_addr, amounts]);
+            }
+            else {
+                return issuanceModule.redeemProxy(vault_addr, assets_type, assets_addr, amounts, txOpts);
+            }
         }
         catch (error) {
-            console.error('Error initializing extension:', error);
+            console.error('Error redeemProxy', error);
         }
     }
 }
