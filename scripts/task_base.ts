@@ -103,18 +103,18 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     if (orderType == OptionType.CALL) {
         try {
             let tx = await jVault_holder.OptionTradingAPI.createOrder({
-                amount: ethers.utils.parseEther('0.022'),
-                underlyingAsset: config_holder.data.eth,
+                amount: ethers.utils.parseEther('0.012'),
+                underlyingAsset: ADDRESSES.base.CBBTC,
                 optionType: OptionType.CALL,
                 premiumAsset: ADDRESSES.base.USDC,
                 optionVault: ethers.constants.AddressZero,
-                optionWriter: writer_config.base.CALL.ETH,
+                optionWriter: writer_config.base.CALL.CBBTC,
                 premiumVault: vaults_1,
                 chainId: config.chainId,
                 secondsToExpiry: 3600 * 2
             }, {
-                maxFeePerGas: feeData.lastBaseFeePerGas?.add(ethers.utils.parseUnits('0.001', 'gwei')),
-                maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+                // maxFeePerGas: feeData.lastBaseFeePerGas?.add(ethers.utils.parseUnits('0.001', 'gwei')),
+                // maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
             });
             if (tx) {
                 // console.log(`order TX: ${tx.hash}`);
