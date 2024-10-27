@@ -60,7 +60,7 @@ export default class OptionTradingAPI {
             'amount': JVaultOrder.amount,
             'jvault_product': 'Degen',
             'base_asset': this.getTokenNamebyAddress(JVaultOrder.underlyingAsset, this.jVaultConfig.network),
-            'quote_asset': this.getTokenNamebyAddress(ADDRESSES.base.USDC, this.jVaultConfig.network),
+            'quote_asset': this.jVaultConfig.data.quoteAsset,
             'premium_asset': this.getTokenNamebyAddress(JVaultOrder.premiumAsset, this.jVaultConfig.network),
             'product_type': JVaultOrder.secondsToExpiry,
             'option_type': JVaultOrder.optionType == 0 ? 'C' : 'P',
@@ -206,8 +206,6 @@ export default class OptionTradingAPI {
         if (moduleCheck) {
             const modules = this.getActiveModulesOfVault();
             const modulesStatus = [true, true, true, true, true, true, true];
-            // set moduleType
-            console.log('VaultManageModuleWrapper setVaultModule calldata');
             calldata_arr.push({
                 dest: contractData.VaultManageModule,
                 value: ethers.constants.Zero,
@@ -215,8 +213,6 @@ export default class OptionTradingAPI {
             });
         }
         if (vault_0.toLowerCase() != vaultAddress.toLowerCase() || vaultType != 1) {
-            // set vaultType
-            console.log('VaultManageModuleWrapper setVaultType calldata');
             calldata_arr.push({
                 dest: contractData.VaultManageModule,
                 value: ethers.constants.Zero,
@@ -232,7 +228,6 @@ export default class OptionTradingAPI {
                 value: ethers.constants.Zero,
                 data: await this.VaultManageModuleWrapper.setVaultTokens(vaultAddress, tokens, tokens_types, true),
             });
-            console.log('VaultManageModuleWrapper setVaultTokens calldata');
         }
         return calldata_arr;
 

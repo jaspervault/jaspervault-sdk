@@ -135,8 +135,6 @@ export default class VaultManageModuleWrapper {
         try {
             const vaultManageModule = this.contracts.getVaultManageModule(this.VaultManageModuleAddress);
             if (encodeFunc) {
-                console.log('vault_type:', vault_type);
-
                 return vaultManageModule.interface.encodeFunctionData('setVaultType', [vault_addr, vault_type]);
             }
             else {

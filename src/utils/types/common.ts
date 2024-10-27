@@ -111,6 +111,7 @@ export interface NetworkConfig {
   uniswapRouterV3: Address;
   eth: Address;
   weth: Address;
+  quoteAsset: string;
   pythPriceFeedAddr: Address;
   optionQuotesUrl: string;
   rpcUrl: string;
