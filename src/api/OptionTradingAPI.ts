@@ -130,24 +130,7 @@ export default class OptionTradingAPI {
         JVaultOrder: JVaultOrder,
         txOpts: TransactionOverrides = {}
     ) {
-        const calldata_arr: BundlerOP[] = [];
-        const newVaultResult = await this.checkAccount(JVaultOrder);
-        calldata_arr.push(...newVaultResult.bundlerOP);
-        JVaultOrder.optionVault = newVaultResult.vaultAddress;
-        const depositPremiumOP = await this.depositPremium(JVaultOrder);
-        if (depositPremiumOP.length > 0) {
-            calldata_arr.push(...depositPremiumOP);
-        }
-        if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
-            calldata_arr.push(...await this.setPrice([]));
-        }
-        calldata_arr.push(...await this.submitOrder(JVaultOrder));
-        try {
-            return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
-        }
-        catch (error) {
-            console.error('Error Placing order:', error);
-        }
+        return await this.createDegenBatchOrders([JVaultOrder], txOpts);
     }
 
     public async createDegenBatchOrders(
@@ -508,7 +491,8 @@ export default class OptionTradingAPI {
         }
     }
 
-    public async getOrderByHash(transactionHash: string): Promise<OptionOrder> {
+    public async getOrderByHash(transactionHash: string): Promise<OptionOrder[]> {
+        const orders: OptionOrder[] = [];
         const query = `
         query OptionPremium {
     optionPremiums(where: { transactionHash: "${transactionHash}" }) {
@@ -532,14 +516,17 @@ export default class OptionTradingAPI {
                     'Content-Type': 'application/json',
                 },
             });
-            const optionPremiums = response.data.data.optionPremiums[0];
+            const optionPremiums = response.data.data.optionPremiums;
             if (!optionPremiums) {
                 return undefined;
             }
-            if (optionPremiums.orderType == 0) {
-                const order_query = `
+            for (let i = 0; i < optionPremiums.length; i++) {
+                const optionPremium = optionPremiums[i];
+
+                if (optionPremium.orderType == 0) {
+                    const order_query = `
                 query CallOrderEntity {
-    callOrderEntityV2S(where: { orderId: "${optionPremiums.orderID}" }) {
+    callOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
         id
         orderId
         holderWallet
@@ -566,31 +553,31 @@ export default class OptionTradingAPI {
     }
 }
                 `;
-                const response_callorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
-                    query: order_query,
-                }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                const orderData = response_callorder.data.data.callOrderEntityV2S[0];
-                if (!orderData) {
-                    return undefined;
+                    const response_callorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
+                        query: order_query,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const orderData = response_callorder.data.data.callOrderEntityV2S[0];
+                    if (!orderData) {
+                        return undefined;
+                    }
+                    const order: OptionOrder = {
+                        transactionHash: orderData.transactionHash,
+                        timestamp: orderData.timestamp,
+                        orderDetail: orderData.callOrder || undefined,
+                        orderId: orderData.orderId,
+                        holderWallet: orderData.holderWallet,
+                        writerWallet: orderData.writerWallet,
+                    };
+                    orders.push(order);
                 }
-                const order: OptionOrder = {
-                    transactionHash: orderData.transactionHash,
-                    timestamp: orderData.timestamp,
-                    orderDetail: orderData.callOrder || undefined,
-                    orderId: orderData.orderId,
-                    holderWallet: orderData.holderWallet,
-                    writerWallet: orderData.writerWallet,
-                };
-                return order;
-            }
-            else {
-                const order_query = `
+                else {
+                    const order_query = `
                 query PutOrderEntity {
-    putOrderEntityV2S(where: { orderId: "${optionPremiums.orderID}" }) {
+    putOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
         id
         orderId
         holderWallet
@@ -617,28 +604,30 @@ export default class OptionTradingAPI {
     }
 }
                 `;
-                const response_putorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
-                    query: order_query,
-                }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                const orderData = response_putorder.data.data.putOrderEntityV2S[0];
-                if (!orderData) {
-                    return undefined;
-                }
-                const order: OptionOrder = {
-                    transactionHash: orderData.transactionHash,
-                    timestamp: orderData.timestamp,
-                    orderDetail: orderData.putOrder || undefined,
-                    orderId: orderData.orderId,
-                    holderWallet: orderData.holderWallet,
-                    writerWallet: orderData.writerWallet,
-                };
-                return order;
+                    const response_putorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
+                        query: order_query,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const orderData = response_putorder.data.data.putOrderEntityV2S[0];
+                    if (!orderData) {
+                        return undefined;
+                    }
+                    const order: OptionOrder = {
+                        transactionHash: orderData.transactionHash,
+                        timestamp: orderData.timestamp,
+                        orderDetail: orderData.putOrder || undefined,
+                        orderId: orderData.orderId,
+                        holderWallet: orderData.holderWallet,
+                        writerWallet: orderData.writerWallet,
+                    };
+                    orders.push(order);
 
+                }
             }
+            return orders;
         } catch (error) {
             console.error('Error fetching order data:', error);
             return undefined;

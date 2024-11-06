@@ -67,16 +67,17 @@ async function main() {
         console.log("beforeApprove", data);
     });
     eventEmitter.on('afterSubmitToBundler', (data) => {
-        //console.log("afterSubmitToBundler", data);
+        console.log("afterSubmitToBundler", data);
     });
     feeData = await ethersProvider.getFeeData();
     feeData;
     await sendDegenBatchOrders();
-    return
+
     await optionHolder_test(OptionType.CALL);
     //await optionHolder_test(OptionType.PUT);
 }
 async function sendDegenBatchOrders() {
+    return
     if (!config_holder.ethersSigner) {
         return console.log("signer_Holder miss")
     }
@@ -96,19 +97,19 @@ async function sendDegenBatchOrders() {
     let vaults_1 = await jVault_holder.VaultAPI.initNewAccount();
     console.log(`vaults_0 ${vaults_0}`, ` vaults_1: ${vaults_1}`);
     let txs: JVaultOrder[] = [];
-    // txs.push({
-    //     amount: ethers.utils.parseEther('0.005'),
-    //     underlyingAsset: ADDRESSES.base.CBBTC,
-    //     optionType: OptionType.CALL,
-    //     premiumAsset: ADDRESSES.base.CBBTC,
-    //     optionVault: ethers.constants.AddressZero,
-    //     optionWriter: writer_config.base.CALL.CBBTC,
-    //     premiumVault: vaults_1,
-    //     chainId: network_config.chainId,
-    //     secondsToExpiry: 3600 * 2
-    // });
     txs.push({
-        amount: ethers.utils.parseEther('0.005'),
+        amount: ethers.utils.parseEther('0.001'),
+        underlyingAsset: ADDRESSES.base.CBBTC,
+        optionType: OptionType.CALL,
+        premiumAsset: ADDRESSES.base.CBBTC,
+        optionVault: ethers.constants.AddressZero,
+        optionWriter: writer_config.base.CALL.CBBTC,
+        premiumVault: vaults_1,
+        chainId: network_config.chainId,
+        secondsToExpiry: 3600 * 2
+    });
+    txs.push({
+        amount: ethers.utils.parseEther('0.001'),
         underlyingAsset: ADDRESSES.base.CBBTC,
         optionType: OptionType.PUT,
         premiumAsset: ADDRESSES.base.CBBTC,
@@ -170,7 +171,7 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     if (orderType == OptionType.CALL) {
         try {
             let tx = await jVault_holder.OptionTradingAPI.createOrder({
-                amount: ethers.utils.parseEther('0.003'),
+                amount: ethers.utils.parseEther('0.01'),
                 underlyingAsset: ADDRESSES.base.CBBTC,
                 optionType: OptionType.CALL,
                 premiumAsset: ADDRESSES.base.CBBTC,
