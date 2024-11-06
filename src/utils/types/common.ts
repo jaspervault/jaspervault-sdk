@@ -3,6 +3,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { BigNumber, BytesLike } from 'ethers';
 import { provider as Web3CoreProvider } from 'web3-core';
 import { TransactionHandler } from '../JaspervaultTransactionHandler';
+import { IOptionModuleV2 } from '@jaspervault/contracts-v2/dist/types/typechain/contracts/modules/OptionModuleV2';
 
 export { TransactionReceipt } from 'ethereum-types';
 
@@ -61,6 +62,7 @@ export interface JVaultOrder {
   id?: string;
   premiumVault?: Address;
   optionVault?: Address;
+  optionVaultIndex?: number;
   optionType?: OptionType;
   optionWriter?: Address;
   amount?: BigNumber;
@@ -74,6 +76,9 @@ export interface JVaultOrder {
   expiry?: Date;
   secondsToExpiry?: number;
   chainId?: number;
+  nftWaiver?: Address;
+  nftId?: BigNumber;
+  premiumSign?: IOptionModuleV2.PremiumOracleSignStruct;
   paymasterSettings?: {
     paymaster: Address;
     paymasterFee: BigNumber;
@@ -92,7 +97,7 @@ export interface BundlerEstimate {
 export interface BundlerOP {
   dest: Address;
   value: BigNumber;
-  data: string[];
+  data: string;
 }
 
 export interface Token {
@@ -101,7 +106,10 @@ export interface Token {
   decimals: number;
   type: number;
 }
-
+export interface JSBTId {
+  key: string;
+  value: number;
+}
 export interface NetworkConfig {
   safeBlock: number;
   chainId: number;
@@ -138,7 +146,13 @@ export interface NetworkConfig {
     OptionService: Address;
     PriceOracle: Address;
     Manager: Address;
+
   };
+  nftWaiver: {
+    JSBT: Address;
+    JSBTIds: JSBTId[];
+  };
+
 }
 export interface TransactionOverrides {
   gasLimit?: BigNumber | Promise<BigNumber>;

@@ -18,6 +18,7 @@ import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/';
 import optionWriterConfig from '../utils/degen_writer.json';
 import ADDRESSES from '../utils/coreAssets.json';
+import { EventEmitter } from 'events';
 import { TransactionHandler, JaspervaultTransactionHandler } from '../utils/JaspervaultTransactionHandler';
 interface VaultResult {
     bundlerOP: BundlerOP[];
@@ -33,6 +34,7 @@ export default class OptionTradingAPI {
     private VaultFactoryWrapper: VaultFactoryWrapper;
     private ManagerWrapper: ManagerWrapper;
     private TransactionHandler: TransactionHandler;
+    private eventEmitter: EventEmitter;
 
     public constructor(
         config: JVaultConfig
@@ -51,11 +53,19 @@ export default class OptionTradingAPI {
         else {
             this.TransactionHandler = this.jVaultConfig.transactionHandler;
         }
+        this.eventEmitter = new EventEmitter();
+
     }
+
     public async getTransactionHandler() {
         return this.TransactionHandler;
     }
-    public async fetchSignData(JVaultOrder: JVaultOrder): Promise<SignedPrice> {
+
+    getEventEmitter(): EventEmitter {
+        return this.eventEmitter;
+    }
+
+    public async fetchSignData(JVaultOrder: JVaultOrder): Promise<IOptionModuleV2.PremiumOracleSignStruct> {
         const data = {
             'amount': JVaultOrder.amount,
             'jvault_product': 'Degen',
@@ -67,10 +77,11 @@ export default class OptionTradingAPI {
             'option_mode': 'EUO',
             'chain_id': JVaultOrder.chainId,
         };
+        this.eventEmitter.emit('beforeFetchQuote', data);
         try {
             const response = await axios.post(this.jVaultConfig.data.optionQuotesUrl, data);
             if (response.status == 200) {
-                const data: SignedPrice = {
+                const signedData: SignedPrice = {
                     id: response.data.data.id,
                     chain_id: response.data.data.chain_id,
                     product_type: response.data.data.product_type,
@@ -88,7 +99,26 @@ export default class OptionTradingAPI {
                     timestamp: response.data.data.timestamp,
                     oracle_sign: response.data.oracle_sign,
                 };
-                return data;
+                const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = {
+                    id: signedData.id,
+                    chainId: signedData.chain_id,
+                    productType: signedData.product_type,
+                    optionAsset: signedData.option_asset,
+                    strikePrice: BigNumber.from(signedData.strike_price),
+                    strikeAsset: signedData.strike_asset,
+                    strikeAmount: BigNumber.from(signedData.strike_amount),
+                    lockAsset: signedData.lock_asset,
+                    lockAmount: BigNumber.from(signedData.lock_amount),
+                    expireDate: BigNumber.from(signedData.expire_date),
+                    lockDate: BigNumber.from(signedData.lock_date),
+                    optionType: BigNumber.from(signedData.option_type),
+                    premiumAsset: signedData.premium_asset,
+                    premiumFee: BigNumber.from(signedData.premium_fee),
+                    timestamp: BigNumber.from(signedData.timestamp),
+                    oracleSign: signedData.oracle_sign,
+                };
+                this.eventEmitter.emit('afterFetchQuote', premiumSign);
+                return premiumSign;
             }
         } catch (error) {
             console.error('Error making fetchSignData request:', error);
@@ -114,10 +144,53 @@ export default class OptionTradingAPI {
         calldata_arr.push(...await this.submitOrder(JVaultOrder));
         try {
             return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
-            //   return await this.bundlerHelper.sendtoVault(JVaultOrder.premiumVault, calldata_arr, txOpts);
         }
         catch (error) {
-            // console.error('Error Placing order:', error);
+            console.error('Error Placing order:', error);
+        }
+    }
+
+    public async createDegenBatchOrders(
+        JVaultOrders: JVaultOrder[],
+        txOpts: TransactionOverrides = {}
+    ): Promise<string> {
+        const calldata_arr: BundlerOP[] = [];
+        if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
+            calldata_arr.push(...await this.setPrice([]));
+        }
+        const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(this.jVaultConfig.EOA);
+        let newVaultIndex = maxVaultSalt.add(1);
+        if (maxVaultSalt.eq(0) || maxVaultSalt.eq(1)) {
+            newVaultIndex = BigNumber.from(2);
+        }
+        for (let i = 0; i < JVaultOrders.length; i++) {
+            if (JVaultOrders[i].optionVault == ethers.constants.AddressZero) {
+                JVaultOrders[i].optionVault = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, newVaultIndex);
+                JVaultOrders[i].optionVaultIndex = newVaultIndex;
+                newVaultIndex = newVaultIndex.add(1);
+            }
+            const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = await this.fetchSignData(JVaultOrders[i]);
+            JVaultOrders[i].premiumSign = premiumSign;
+            console.log('premiumSign:', premiumSign);
+        }
+        for (let i = 0; i < JVaultOrders.length; i++) {
+            const JVaultOrder = JVaultOrders[i];
+            const newVaultResult = await this.checkAccount(JVaultOrder);
+            calldata_arr.push(...newVaultResult.bundlerOP);
+            JVaultOrder.optionVault = newVaultResult.vaultAddress;
+            const depositPremiumOP = await this.depositPremium(JVaultOrder);
+            if (depositPremiumOP.length > 0) {
+                calldata_arr.push(...depositPremiumOP);
+            }
+            calldata_arr.push(...await this.submitOrder(JVaultOrder));
+            this.eventEmitter.emit('afterSubmitToBundler', calldata_arr);
+        }
+        try {
+            return await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
+
+        }
+        catch (error) {
+            console.error('Error Placing order:', error);
         }
     }
 
@@ -164,12 +237,11 @@ export default class OptionTradingAPI {
             if (JVaultOrder.optionVault) {
                 code = await this.jVaultConfig.ethersProvider.getCode(JVaultOrder.optionVault);
                 if (code == '0x') {
-                    const index = await this.VaultFactoryWrapper.getVaultToSalt(JVaultOrder.optionVault);
-                    vaultAddress = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, index);
+                    vaultAddress = JVaultOrder.optionVault;
                     calldata_arr.push({
                         dest: this.jVaultConfig.data.contractData.VaultFactory,
                         value: ethers.constants.Zero,
-                        data: await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, index, true),
+                        data: await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, JVaultOrder.optionVaultIndex, true),
                     });
                     calldata_arr.push(...await this.initializeVault(JVaultOrder.optionVault, JVaultOrder.optionType == OptionType.CALL ? 7 : 3));
                 }
@@ -205,7 +277,7 @@ export default class OptionTradingAPI {
         const contractData = this.jVaultConfig.data.contractData;
         if (moduleCheck) {
             const modules = this.getActiveModulesOfVault();
-            const modulesStatus = [true, true, true, true, true, true, true];
+            const modulesStatus = modules.map(() => true);
             calldata_arr.push({
                 dest: contractData.VaultManageModule,
                 value: ethers.constants.Zero,
@@ -251,26 +323,6 @@ export default class OptionTradingAPI {
 
     private async submitOrder(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
-        const signedData: SignedPrice = await this.fetchSignData(JVaultOrder);
-        console.log('signedData:', signedData);
-        const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = {
-            id: signedData.id,
-            chainId: signedData.chain_id,
-            productType: signedData.product_type,
-            optionAsset: signedData.option_asset,
-            strikePrice: BigNumber.from(signedData.strike_price),
-            strikeAsset: signedData.strike_asset,
-            strikeAmount: BigNumber.from(signedData.strike_amount),
-            lockAsset: signedData.lock_asset,
-            lockAmount: BigNumber.from(signedData.lock_amount),
-            expireDate: BigNumber.from(signedData.expire_date),
-            lockDate: BigNumber.from(signedData.lock_date),
-            optionType: BigNumber.from(signedData.option_type),
-            premiumAsset: signedData.premium_asset,
-            premiumFee: BigNumber.from(signedData.premium_fee),
-            timestamp: BigNumber.from(signedData.timestamp),
-            oracleSign: signedData.oracle_sign,
-        };
         const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
         let productTypeIndex = BigNumber.from(0);
         let settingsIndex = BigNumber.from(0);
@@ -294,10 +346,38 @@ export default class OptionTradingAPI {
             settingsIndex: settingsIndex,
             //  oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
             oracleIndex: BigNumber.from(0),
-            premiumSign: premiumSign,
-            nftFreeOption: ethers.constants.AddressZero,
+            premiumSign: JVaultOrder.premiumSign,
+            nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
         };
         console.log('optionOrder:', optionOrder);
+        this.eventEmitter.emit('beforeSubmitToBundler', optionOrder);
+
+        if (JVaultOrder.nftId != undefined) {
+            console.log('nftId:', JVaultOrder.nftId);
+            if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
+                const setAboutToUseNftId_abi = [
+                    {
+                        'inputs': [
+                            {
+                                'internalType': 'uint256',
+                                'name': '_nftId',
+                                'type': 'uint256',
+                            },
+                        ],
+                        'name': 'setAboutToUseNftId',
+                        'outputs': [],
+                        'stateMutability': 'nonpayable',
+                        'type': 'function',
+                    },
+                ];
+                const iface = new ethers.utils.Interface(setAboutToUseNftId_abi);
+                calldata_arr.push({
+                    dest: this.jVaultConfig.data.nftWaiver.JSBT,
+                    value: ethers.constants.Zero,
+                    data: iface.encodeFunctionData('setAboutToUseNftId', [JVaultOrder.nftId]),
+                });
+            }
+        }
         calldata_arr.push({
             dest: this.jVaultConfig.data.contractData.OptionModuleV2,
             value: ethers.constants.Zero,
@@ -309,8 +389,7 @@ export default class OptionTradingAPI {
     private async depositPremium(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
         if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
-            const signedData: SignedPrice = await this.fetchSignData(JVaultOrder);
-            const premium = BigNumber.from(signedData.premium_fee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
+            const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
             console.log('premium:', premium.toString());
             let vaule = ethers.constants.Zero;
             if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
@@ -343,7 +422,10 @@ export default class OptionTradingAPI {
                         const allowance = await premium_asset.allowance(this.jVaultConfig.EOA, JVaultOrder.premiumVault);
                         if (allowance.lt(transferAmount)) {
                             console.log('approve:', transferAmount.toString());
-                            await (await premium_asset.approve(JVaultOrder.premiumVault, transferAmount)).wait(this.jVaultConfig.data.safeBlock);
+                            this.eventEmitter.emit('beforeApprove', allowance, transferAmount);
+                            const tx = await premium_asset.approve(JVaultOrder.premiumVault, transferAmount);
+                            await tx.wait(this.jVaultConfig.data.safeBlock);
+                            this.eventEmitter.emit('afterApprove', tx);
                         }
                         calldata_arr.push({
                             dest: this.jVaultConfig.data.contractData.IssuanceModule,
@@ -365,7 +447,7 @@ export default class OptionTradingAPI {
 
     public getActiveModulesOfVault(): string[] {
         const contractData = this.jVaultConfig.data.contractData;
-        return [
+        const activeModules = [
             contractData.VaultFactory,
             contractData.VaultManageModule,
             contractData.OptionModuleV2,
@@ -374,6 +456,12 @@ export default class OptionTradingAPI {
             contractData.OptionService,
             contractData.VaultPaymaster,
         ];
+        if (this.jVaultConfig.data.nftWaiver) {
+            if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
+                activeModules.push(this.jVaultConfig.data.nftWaiver.JSBT);
+            }
+        }
+        return activeModules;
     }
 
     public async liquidateOrder(

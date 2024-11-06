@@ -37,7 +37,8 @@
         "ChainLinkOracleAdapter": "0x3254086894cDBF733E4e87f750ac557D042F3C80",
         "VaultFactory": "0xB0329dDA9E3707470360e39898670DC9afE10fe1",
         "OptionModuleV2": "0x4De345778a85Cf12aF49c423c75Fe02C5799d425",
-        "OptionFacetV2": "0x89F59EBaD0D8933551Aed72b13097Ad7addBE819"
+        "OptionFacetV2": "0x89F59EBaD0D8933551Aed72b13097Ad7addBE819",
+        "JSBT": "0x0000000000000000000000000000000000000000"
     },
     "tokens": [
         {

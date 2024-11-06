@@ -37,7 +37,8 @@
         "PythOracleAdapter": "0xe1099a130A41B7a45Bc0e107714f98b18Fded40B",
         "VaultFactory": "0x0f487603edE93a5329023512B7dcdA632eD70Ed5",
         "OptionFacetV2": "0xDCB8372F4C3f35667102d3705C01B60513af58E8",
-        "OptionModuleV2": "0x73C721E3E3Ca7394300f31DD2C043C51ad28BF5b"
+        "OptionModuleV2": "0x73C721E3E3Ca7394300f31DD2C043C51ad28BF5b",
+        "JSBT": "0x0000000000000000000000000000000000000000"
     },
     "tokens": [
         {

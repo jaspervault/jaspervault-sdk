@@ -204,7 +204,6 @@ class ParticalHandler implements TransactionHandler {
         const tx = await this.getUserOpByHash(res);
         await tx.wait(1);
         console.log('<tx hash>', tx.hash);
-        txOpts;
         return tx.hash;
     }
     async getUserOpByHash(res, timeout = 30, interval = 2) {

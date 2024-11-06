@@ -90,8 +90,8 @@ class CoinbaseHandler implements TransactionHandler {
             maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('120')).div(BigNumber.from('100'));
             if (ethersFeeData.lastBaseFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
                 console.log('lastBaseFeePerGas too low--->', ethers.utils.formatUnits(ethersFeeData.lastBaseFeePerGas, 'gwei'));
-                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('120')).div(BigNumber.from('100'));
-                maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('150')).div(BigNumber.from('100'));
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('150')).div(BigNumber.from('100'));
+                maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('180')).div(BigNumber.from('100'));
 
             }
             else {

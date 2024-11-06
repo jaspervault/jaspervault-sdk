@@ -43,6 +43,31 @@
         "VaultFactoryV2": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE",
         "VaultFactory": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE"
     },
+    "nftWaiver": {
+        "JSBT": "0x5d23B93D82010535B8d6E9bCdDE45b2E8e6a8E12",
+        "JSBTIds": [
+            {
+                "key": "moonlight",
+                "value": 1
+            },
+            {
+                "key": "reality_stone_btc_002",
+                "value": 2
+            },
+            {
+                "key": "reality_stone_btc_01",
+                "value": 3
+            },
+            {
+                "key": "power_stone_btc_002",
+                "value": 4
+            },
+            {
+                "key": "power_stone_btc_01",
+                "value": 5
+            }
+        ]
+    },
     "tokens": [
         {
             "name": "btc",
