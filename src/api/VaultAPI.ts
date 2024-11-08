@@ -41,10 +41,11 @@ export default class OptionTradingAPI {
         }
     }
 
-    /// <summary>
-    /// Initialize a new account
-    /// </summary>
-    /// <returns>Vault 1 Address</returns>
+
+    /**
+     * @notice Initialize a new account
+     * @returns Address of the new account
+     */
     public async initNewAccount(): Promise<Address> {
         const vault1 = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, 1);
         const code = await this.jVaultConfig.ethersProvider.getCode(vault1);
@@ -52,7 +53,6 @@ export default class OptionTradingAPI {
             const createAccountTX = await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, 1);
             if (createAccountTX) {
                 await createAccountTX.wait(this.jVaultConfig.data.safeBlock);
-
                 return vault1;
             }
             else {
@@ -63,8 +63,15 @@ export default class OptionTradingAPI {
         return vault1;
     }
 
-
-
+    /**
+     *
+     * @param from vault address or EOA address
+     * @param to destination address
+     * @param asset if asset is native token, use the address "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" for the native token, otherwise use the address of the ERC20 token
+     * @param amount amount of asset to transfer
+     * @param txOpts optional transaction overrides
+     * @returns transaction hash or error
+     */
     public async transfer(
         from: Address,
         to: Address,
@@ -198,6 +205,12 @@ export default class OptionTradingAPI {
         }
     }
 
+    /**
+     *
+     * @param wallet the owner of the vault
+     * @param txOpts optional transaction overrides
+     * @returns vault address
+     */
     public async createNewVault(wallet: Address, txOpts: TransactionOverrides = {}): Promise<Address> {
         try {
             const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(wallet);
@@ -205,7 +218,7 @@ export default class OptionTradingAPI {
             const tx = await this.VaultFactoryWrapper.createAccount(wallet, newVaultIndex, false, txOpts);
             if (tx) {
                 const newVault = await this.VaultFactoryWrapper.getAddress(wallet, newVaultIndex);
-                await tx.wait(2);
+                await tx.wait(this.jVaultConfig.data.safeBlock);
                 return newVault;
             }
             else {
@@ -225,7 +238,7 @@ export default class OptionTradingAPI {
             const tx = await this.VaultFactoryWrapper.createAccount(wallet, index, false, txOpts);
             if (tx) {
                 const newVault = await this.VaultFactoryWrapper.getAddress(wallet, index);
-                await tx.wait(2);
+                await tx.wait(this.jVaultConfig.data.safeBlock);
                 return newVault;
             }
             else {
@@ -235,6 +248,7 @@ export default class OptionTradingAPI {
             console.error('Error creating account:', error);
         }
     }
+
     public async setOptionWriterSettings(
         settings: IOptionFacetV2.ManagedOptionsSettingsStruct,
         txOpts: TransactionOverrides = {}): Promise<string | any> {

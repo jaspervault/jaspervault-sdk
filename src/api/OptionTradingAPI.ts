@@ -36,6 +36,10 @@ export default class OptionTradingAPI {
     private TransactionHandler: TransactionHandler;
     private eventEmitter: EventEmitter;
 
+    /**
+     *
+     * @param config JVaultConfig
+     */
     public constructor(
         config: JVaultConfig
     ) {
@@ -61,10 +65,19 @@ export default class OptionTradingAPI {
         return this.TransactionHandler;
     }
 
-    getEventEmitter(): EventEmitter {
+    /**
+     *
+     * @returns {EventEmitter} - A promise that resolves to the event emitter.
+     */
+    public getEventEmitter(): EventEmitter {
         return this.eventEmitter;
     }
 
+    /**
+     *
+     * @param JVaultOrder
+     * @returns A promise that resolves to the premium sign data.
+     */
     public async fetchSignData(JVaultOrder: JVaultOrder): Promise<IOptionModuleV2.PremiumOracleSignStruct> {
         const data = {
             'amount': JVaultOrder.amount,
@@ -138,7 +151,7 @@ export default class OptionTradingAPI {
     public async createOrder(
         JVaultOrder: JVaultOrder,
         txOpts: TransactionOverrides = {}
-    ) {
+    ): Promise<string> {
         return await this.createDegenBatchOrders([JVaultOrder], txOpts);
     }
 
@@ -156,6 +169,13 @@ export default class OptionTradingAPI {
         return await this.createDegenBatchOrders([JVaultOrder], txOpts);
     }
 
+    /**
+     * Creates multiple Degen orders with the given parameters.
+     *
+     * @param {JVaultOrder[]} JVaultOrders - The order details.
+     * @param {TransactionOverrides} [txOpts={}] - Optional transaction overrides.
+     * @returns {Promise<string>} - A promise that resolves to the transaction hash.
+     */
     public async createDegenBatchOrders(
         JVaultOrders: JVaultOrder[],
         txOpts: TransactionOverrides = {}
@@ -205,6 +225,11 @@ export default class OptionTradingAPI {
         }
     }
 
+    /**
+     *
+     * @param vaultAddress
+     * @returns A promise that resolves to the vault modules status.
+     */
     public async checkVaultModulesStatus(vaultAddress: Address): Promise<boolean> {
         const targets: Address[] = [];
         const data: Bytes[] = [];
@@ -224,6 +249,225 @@ export default class OptionTradingAPI {
             }
         }
         return true;
+    }
+
+    public getActiveModulesOfVault(): string[] {
+        const contractData = this.jVaultConfig.data.contractData;
+        const activeModules = [
+            contractData.VaultFactory,
+            contractData.VaultManageModule,
+            contractData.OptionModuleV2,
+            contractData.IssuanceModule,
+            contractData.PriceOracle,
+            contractData.OptionService,
+            contractData.VaultPaymaster,
+        ];
+        if (this.jVaultConfig.data.nftWaiver) {
+            if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
+                activeModules.push(this.jVaultConfig.data.nftWaiver.JSBT);
+            }
+        }
+        return activeModules;
+    }
+
+    public async liquidateOrder(
+        JVaultOrder: JVaultOrder,
+        liquidateType: LiquidateType,
+        txOpts: TransactionOverrides = {}
+    ) {
+        const calldata_arr: BundlerOP[] = [];
+        const priceIds = [];
+        for (let i = 0; i < this.jVaultConfig.data.pyth.length; i++) {
+            priceIds.push(this.jVaultConfig.data.pyth[i][0]);
+        }
+        const priceFeedUpdateData = await this.getPythPriceFeedUpdateData(priceIds);
+        calldata_arr.push({
+            dest: this.jVaultConfig.data.contractData.PriceOracle,
+            value: ethers.constants.Zero,
+            data: await this.PriceOracleWrapper.setPrice(this.jVaultConfig.data.pythPriceFeedAddr, priceFeedUpdateData, true),
+        });
+        let earnings = 0;
+        if (liquidateType != 0) {
+            earnings = await this.OptionServiceWrapper.getEarningsAmount(
+                JVaultOrder.lockAsset,
+                JVaultOrder.lockAmount,
+                JVaultOrder.strikeAsset,
+                JVaultOrder.strikeAmount);
+        }
+        console.log('Earnings:', earnings);
+        calldata_arr.push({
+            dest: this.jVaultConfig.data.contractData.OptionService,
+            value: ethers.constants.Zero,
+            data: await this.OptionServiceWrapper.liquidateOption(
+                BigNumber.from(JVaultOrder.optionType),
+                BigNumber.from(JVaultOrder.id),
+                BigNumber.from(liquidateType),
+                BigNumber.from(earnings),
+                ethers.constants.Zero,
+                true),
+        });
+        try {
+            return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
+        }
+        catch (error) {
+            console.error('Error liquidateOrder:', error);
+        }
+    }
+
+    /**
+     *
+     * @param transactionHash
+     * @returns A promise that resolves to the option order details.
+     */
+    public async getOrderByHash(transactionHash: string): Promise<OptionOrder[]> {
+        const orders: OptionOrder[] = [];
+        const query = `
+        query OptionPremium {
+    optionPremiums(where: { transactionHash: "${transactionHash}" }) {
+        id
+        orderType
+        orderID
+        writer
+        holder
+        premiumAsset
+        amount
+        transactionHash
+        timestamp
+    }
+}
+    `;
+        try {
+            const response = await axios.post(this.jVaultConfig.data.subgraphUrl, {
+                query: query,
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            const optionPremiums = response.data.data.optionPremiums;
+            if (!optionPremiums) {
+                return undefined;
+            }
+            for (let i = 0; i < optionPremiums.length; i++) {
+                const optionPremium = optionPremiums[i];
+
+                if (optionPremium.orderType == 0) {
+                    const order_query = `
+                query CallOrderEntity {
+    callOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
+        id
+        orderId
+        holderWallet
+        writerWallet
+        transactionHash
+        timestamp
+        callOrder {
+            id
+            holder
+            liquidateMode
+            writer
+            lockAssetType
+            recipient
+            lockAsset
+            underlyingAsset
+            strikeAsset
+            lockAmount
+            strikeAmount
+            expirationDate
+            lockDate
+            underlyingNftID
+            quantity
+        }
+    }
+}
+                `;
+                    const response_callorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
+                        query: order_query,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const orderData = response_callorder.data.data.callOrderEntityV2S[0];
+                    if (!orderData) {
+                        return undefined;
+                    }
+                    const order: OptionOrder = {
+                        transactionHash: orderData.transactionHash,
+                        timestamp: orderData.timestamp,
+                        orderDetail: orderData.callOrder || undefined,
+                        orderId: orderData.orderId,
+                        holderWallet: orderData.holderWallet,
+                        writerWallet: orderData.writerWallet,
+                    };
+                    orders.push(order);
+                }
+                else {
+                    const order_query = `
+                query PutOrderEntity {
+    putOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
+        id
+        orderId
+        holderWallet
+        writerWallet
+        transactionHash
+        timestamp
+        putOrder {
+            id
+            holder
+            liquidateMode
+            writer
+            lockAssetType
+            recipient
+            lockAsset
+            underlyingAsset
+            strikeAsset
+            lockAmount
+            strikeAmount
+            expirationDate
+            lockDate
+            underlyingNftID
+            quantity
+        }
+    }
+}
+                `;
+                    const response_putorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
+                        query: order_query,
+                    }, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const orderData = response_putorder.data.data.putOrderEntityV2S[0];
+                    if (!orderData) {
+                        return undefined;
+                    }
+                    const order: OptionOrder = {
+                        transactionHash: orderData.transactionHash,
+                        timestamp: orderData.timestamp,
+                        orderDetail: orderData.putOrder || undefined,
+                        orderId: orderData.orderId,
+                        holderWallet: orderData.holderWallet,
+                        writerWallet: orderData.writerWallet,
+                    };
+                    orders.push(order);
+
+                }
+            }
+            return orders;
+        } catch (error) {
+            console.error('Error fetching order data:', error);
+            return undefined;
+        }
+    }
+
+    /**
+     *
+     * @returns {Promise<any>} - A promise that resolves to the option writer settings.
+     */
+    public async getOptionWriterSettings(): Promise<any> {
+        return optionWriterConfig;
     }
 
     private async getDepositData(JVaultOrder: JVaultOrder): Promise<DepositData> {
@@ -320,9 +564,7 @@ export default class OptionTradingAPI {
         return { bundlerOP: calldata_arr, vaultAddress: vaultAddress };
     }
 
-    public async getOptionWriterSettings(): Promise<any> {
-        return optionWriterConfig;
-    }
+
 
     private async initializeVault(vaultAddress: Address, vaultType: number, moduleCheck: boolean = true, tokenCheck: boolean = true): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
@@ -493,212 +735,6 @@ export default class OptionTradingAPI {
             console.log('No need to deposit');
         }
         return calldata_arr;
-    }
-
-    public getActiveModulesOfVault(): string[] {
-        const contractData = this.jVaultConfig.data.contractData;
-        const activeModules = [
-            contractData.VaultFactory,
-            contractData.VaultManageModule,
-            contractData.OptionModuleV2,
-            contractData.IssuanceModule,
-            contractData.PriceOracle,
-            contractData.OptionService,
-            contractData.VaultPaymaster,
-        ];
-        if (this.jVaultConfig.data.nftWaiver) {
-            if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
-                activeModules.push(this.jVaultConfig.data.nftWaiver.JSBT);
-            }
-        }
-        return activeModules;
-    }
-
-    public async liquidateOrder(
-        JVaultOrder: JVaultOrder,
-        liquidateType: LiquidateType,
-        txOpts: TransactionOverrides = {}
-    ) {
-        const calldata_arr: BundlerOP[] = [];
-        const priceIds = [];
-        for (let i = 0; i < this.jVaultConfig.data.pyth.length; i++) {
-            priceIds.push(this.jVaultConfig.data.pyth[i][0]);
-        }
-        const priceFeedUpdateData = await this.getPythPriceFeedUpdateData(priceIds);
-        calldata_arr.push({
-            dest: this.jVaultConfig.data.contractData.PriceOracle,
-            value: ethers.constants.Zero,
-            data: await this.PriceOracleWrapper.setPrice(this.jVaultConfig.data.pythPriceFeedAddr, priceFeedUpdateData, true),
-        });
-        let earnings = 0;
-        if (liquidateType != 0) {
-            earnings = await this.OptionServiceWrapper.getEarningsAmount(
-                JVaultOrder.lockAsset,
-                JVaultOrder.lockAmount,
-                JVaultOrder.strikeAsset,
-                JVaultOrder.strikeAmount);
-        }
-        console.log('Earnings:', earnings);
-        calldata_arr.push({
-            dest: this.jVaultConfig.data.contractData.OptionService,
-            value: ethers.constants.Zero,
-            data: await this.OptionServiceWrapper.liquidateOption(
-                BigNumber.from(JVaultOrder.optionType),
-                BigNumber.from(JVaultOrder.id),
-                BigNumber.from(liquidateType),
-                BigNumber.from(earnings),
-                ethers.constants.Zero,
-                true),
-        });
-        try {
-            return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
-        }
-        catch (error) {
-            console.error('Error liquidateOrder:', error);
-        }
-    }
-
-    public async getOrderByHash(transactionHash: string): Promise<OptionOrder[]> {
-        const orders: OptionOrder[] = [];
-        const query = `
-        query OptionPremium {
-    optionPremiums(where: { transactionHash: "${transactionHash}" }) {
-        id
-        orderType
-        orderID
-        writer
-        holder
-        premiumAsset
-        amount
-        transactionHash
-        timestamp
-    }
-}
-    `;
-        try {
-            const response = await axios.post(this.jVaultConfig.data.subgraphUrl, {
-                query: query,
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-            const optionPremiums = response.data.data.optionPremiums;
-            if (!optionPremiums) {
-                return undefined;
-            }
-            for (let i = 0; i < optionPremiums.length; i++) {
-                const optionPremium = optionPremiums[i];
-
-                if (optionPremium.orderType == 0) {
-                    const order_query = `
-                query CallOrderEntity {
-    callOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
-        id
-        orderId
-        holderWallet
-        writerWallet
-        transactionHash
-        timestamp
-        callOrder {
-            id
-            holder
-            liquidateMode
-            writer
-            lockAssetType
-            recipient
-            lockAsset
-            underlyingAsset
-            strikeAsset
-            lockAmount
-            strikeAmount
-            expirationDate
-            lockDate
-            underlyingNftID
-            quantity
-        }
-    }
-}
-                `;
-                    const response_callorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
-                        query: order_query,
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
-                    const orderData = response_callorder.data.data.callOrderEntityV2S[0];
-                    if (!orderData) {
-                        return undefined;
-                    }
-                    const order: OptionOrder = {
-                        transactionHash: orderData.transactionHash,
-                        timestamp: orderData.timestamp,
-                        orderDetail: orderData.callOrder || undefined,
-                        orderId: orderData.orderId,
-                        holderWallet: orderData.holderWallet,
-                        writerWallet: orderData.writerWallet,
-                    };
-                    orders.push(order);
-                }
-                else {
-                    const order_query = `
-                query PutOrderEntity {
-    putOrderEntityV2S(where: { orderId: "${optionPremium.orderID}" }) {
-        id
-        orderId
-        holderWallet
-        writerWallet
-        transactionHash
-        timestamp
-        putOrder {
-            id
-            holder
-            liquidateMode
-            writer
-            lockAssetType
-            recipient
-            lockAsset
-            underlyingAsset
-            strikeAsset
-            lockAmount
-            strikeAmount
-            expirationDate
-            lockDate
-            underlyingNftID
-            quantity
-        }
-    }
-}
-                `;
-                    const response_putorder = await axios.post(this.jVaultConfig.data.subgraphUrl, {
-                        query: order_query,
-                    }, {
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                    });
-                    const orderData = response_putorder.data.data.putOrderEntityV2S[0];
-                    if (!orderData) {
-                        return undefined;
-                    }
-                    const order: OptionOrder = {
-                        transactionHash: orderData.transactionHash,
-                        timestamp: orderData.timestamp,
-                        orderDetail: orderData.putOrder || undefined,
-                        orderId: orderData.orderId,
-                        holderWallet: orderData.holderWallet,
-                        writerWallet: orderData.writerWallet,
-                    };
-                    orders.push(order);
-
-                }
-            }
-            return orders;
-        } catch (error) {
-            console.error('Error fetching order data:', error);
-            return undefined;
-        }
     }
 
     private async getPythPriceFeedUpdateData(tokens: string[]): Promise<any> {
