@@ -79,10 +79,17 @@ export interface JVaultOrder {
   nftWaiver?: Address;
   nftId?: BigNumber;
   premiumSign?: IOptionModuleV2.PremiumOracleSignStruct;
+  depositData?: DepositData;
   paymasterSettings?: {
     paymaster: Address;
     paymasterFee: BigNumber;
   };
+}
+export interface DepositData {
+  vault: Address;
+  amount: BigNumber;
+  token: Address;
+  isERC20: boolean;
 }
 
 export interface BundlerEstimate {

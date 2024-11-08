@@ -1,5 +1,5 @@
 'use strict';
-import { JVaultConfig, BundlerOP, SignedPrice, LiquidateType, OptionType, Address } from '../utils/types/index';
+import { JVaultConfig, BundlerOP, SignedPrice, LiquidateType, OptionType, Address, DepositData } from '../utils/types/index';
 import { JVaultOrder, OptionOrder, Bytes } from '../utils/types';
 import {
     OptionModuleV2Wrapper,
@@ -126,6 +126,15 @@ export default class OptionTradingAPI {
         }
     }
 
+    /**
+     * @deprecated This method will be deprecated soon. Please use `createDegenOrder` instead.
+     *
+     * Creates an order with the given parameters.
+     *
+     * @param {JVaultOrder} JVaultOrder - The order details.
+     * @param {TransactionOverrides} [txOpts={}] - Optional transaction overrides.
+     * @returns {Promise<string>} - A promise that resolves to the transaction hash.
+     */
     public async createOrder(
         JVaultOrder: JVaultOrder,
         txOpts: TransactionOverrides = {}
@@ -133,10 +142,27 @@ export default class OptionTradingAPI {
         return await this.createDegenBatchOrders([JVaultOrder], txOpts);
     }
 
+    /**
+     * Creates an Degen order with the given parameters.
+     *
+     * @param {JVaultOrder} JVaultOrder - The order details.
+     * @param {TransactionOverrides} [txOpts={}] - Optional transaction overrides.
+     * @returns {Promise<string>} - A promise that resolves to the transaction hash.
+     */
+    public async createDegenOrder(
+        JVaultOrder: JVaultOrder,
+        txOpts: TransactionOverrides = {}
+    ): Promise<string> {
+        return await this.createDegenBatchOrders([JVaultOrder], txOpts);
+    }
+
     public async createDegenBatchOrders(
         JVaultOrders: JVaultOrder[],
         txOpts: TransactionOverrides = {}
     ): Promise<string> {
+        if (JVaultOrders.length == 0) {
+            throw new Error('No orders to place');
+        }
         const calldata_arr: BundlerOP[] = [];
         if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
             calldata_arr.push(...await this.setPrice([]));
@@ -154,17 +180,19 @@ export default class OptionTradingAPI {
             }
             const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = await this.fetchSignData(JVaultOrders[i]);
             JVaultOrders[i].premiumSign = premiumSign;
+            JVaultOrders[i].depositData = await this.getDepositData(JVaultOrders[i]);
             console.log('premiumSign:', premiumSign);
         }
+        const depositPremiumOP = await this.depositPremium(JVaultOrders[0].premiumVault, JVaultOrders);
+        if (depositPremiumOP.length > 0) {
+            calldata_arr.push(...depositPremiumOP);
+        }
+
         for (let i = 0; i < JVaultOrders.length; i++) {
             const JVaultOrder = JVaultOrders[i];
             const newVaultResult = await this.checkAccount(JVaultOrder);
             calldata_arr.push(...newVaultResult.bundlerOP);
             JVaultOrder.optionVault = newVaultResult.vaultAddress;
-            const depositPremiumOP = await this.depositPremium(JVaultOrder);
-            if (depositPremiumOP.length > 0) {
-                calldata_arr.push(...depositPremiumOP);
-            }
             calldata_arr.push(...await this.submitOrder(JVaultOrder));
             this.eventEmitter.emit('afterSubmitToBundler', calldata_arr);
         }
@@ -196,6 +224,48 @@ export default class OptionTradingAPI {
             }
         }
         return true;
+    }
+
+    private async getDepositData(JVaultOrder: JVaultOrder): Promise<DepositData> {
+        const depositData: DepositData = {
+            vault: JVaultOrder.premiumVault,
+            amount: ethers.constants.Zero,
+            token: JVaultOrder.premiumAsset,
+            isERC20: JVaultOrder.premiumAsset != this.jVaultConfig.data.eth,
+        };
+        if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
+            const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
+            let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
+            if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
+                balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
+            }
+            else {
+                const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
+                balanceOfPremiumVault = await premium_asset.balanceOf(JVaultOrder.premiumVault);
+            }
+            if (balanceOfPremiumVault.lt(premium) == true) {
+                const transferAmount = premium.sub(balanceOfPremiumVault).mul(BigNumber.from(101)).div(BigNumber.from(100));
+                let EOA_balance = ethers.constants.Zero;
+                if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
+                    EOA_balance = await this.jVaultConfig.ethersProvider.getBalance(this.jVaultConfig.EOA);
+                }
+                else {
+                    const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
+                    EOA_balance = await premium_asset.balanceOf(this.jVaultConfig.EOA);
+                }
+                if (EOA_balance.gte(transferAmount) == true) {
+                    depositData.amount = transferAmount;
+                }
+                else {
+                    throw new Error(`EOA_balance premiumAsset :${EOA_balance} Insufficient balance`);
+                }
+            }
+            else {
+                console.log('No need to deposit');
+            }
+        }
+
+        return depositData;
     }
 
     private async checkAccount(JVaultOrder: JVaultOrder): Promise<VaultResult> {
@@ -369,61 +439,42 @@ export default class OptionTradingAPI {
         return calldata_arr;
     }
 
-    private async depositPremium(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
+    private async depositPremium(premiumVault: Address, JVaultOrders: JVaultOrder[]): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
-        if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
-            const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
-            console.log('premium:', premium.toString());
-            let vaule = ethers.constants.Zero;
-            if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
-                vaule = premium;
+        let depositAmount = ethers.constants.Zero;
+        let premiumAsset = this.jVaultConfig.data.eth;
+        for (let i = 0; i < JVaultOrders.length; i++) {
+            const JVaultOrder = JVaultOrders[i];
+            if (JVaultOrder.depositData) {
+                if (JVaultOrder.depositData.amount.eq(ethers.constants.Zero) == false) {
+                    depositAmount = depositAmount.add(JVaultOrder.depositData.amount);
+                    premiumAsset = JVaultOrder.depositData.token;
+                }
             }
-            let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
-            if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
-                balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
+        }
+        if (depositAmount.gt(ethers.constants.Zero) == true) {
+            if (premiumAsset == this.jVaultConfig.data.eth) {
+
             }
             else {
-                const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
-                balanceOfPremiumVault = await premium_asset.balanceOf(JVaultOrder.premiumVault);
+                const premiumAsset_erc20wrapper = new ERC20Wrapper(this.jVaultConfig.ethersSigner, premiumAsset);
+                const allowance = await premiumAsset_erc20wrapper.allowance(this.jVaultConfig.EOA, premiumVault);
+                if (allowance.lt(depositAmount)) {
+                    console.log('approve:', depositAmount.toString());
+                    this.eventEmitter.emit('beforeApprove', allowance, depositAmount);
+                    const tx = await premiumAsset_erc20wrapper.approve(premiumVault, depositAmount);
+                    await tx.wait(this.jVaultConfig.data.safeBlock);
+                    this.eventEmitter.emit('afterApprove', tx);
+                }
+                calldata_arr.push({
+                    dest: this.jVaultConfig.data.contractData.IssuanceModule,
+                    value: ethers.constants.Zero,
+                    data: await this.IssuanceModuleWrapper.issue(premiumVault, this.jVaultConfig.EOA, [premiumAsset], [depositAmount], true),
+                });
             }
-            if (balanceOfPremiumVault.lt(premium) == true) {
-                const transferAmount = premium.sub(balanceOfPremiumVault).mul(BigNumber.from(101)).div(BigNumber.from(100));
-                console.log('transferAmount:', transferAmount.toString());
-                let EOA_balance = ethers.constants.Zero;
-                if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
-                    EOA_balance = await this.jVaultConfig.ethersProvider.getBalance(this.jVaultConfig.EOA);
-                }
-                else {
-                    const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
-                    EOA_balance = await premium_asset.balanceOf(this.jVaultConfig.EOA);
-                    console.log(this.jVaultConfig.EOA);
-                }
-                console.log('EOA_balance:', JVaultOrder.premiumAsset, EOA_balance.toString());
-                if (EOA_balance.gte(transferAmount) == true) {
-                    if (JVaultOrder.premiumAsset != this.jVaultConfig.data.eth) {
-                        const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
-                        const allowance = await premium_asset.allowance(this.jVaultConfig.EOA, JVaultOrder.premiumVault);
-                        if (allowance.lt(transferAmount)) {
-                            console.log('approve:', transferAmount.toString());
-                            this.eventEmitter.emit('beforeApprove', allowance, transferAmount);
-                            const tx = await premium_asset.approve(JVaultOrder.premiumVault, transferAmount);
-                            await tx.wait(this.jVaultConfig.data.safeBlock);
-                            this.eventEmitter.emit('afterApprove', tx);
-                        }
-                        calldata_arr.push({
-                            dest: this.jVaultConfig.data.contractData.IssuanceModule,
-                            value: vaule,
-                            data: await this.IssuanceModuleWrapper.issue(JVaultOrder.premiumVault, this.jVaultConfig.EOA, [JVaultOrder.premiumAsset], [transferAmount], true),
-                        });
-                    }
-                }
-                else {
-                    throw new Error(`EOA_balance premiumAsset :${EOA_balance} Insufficient balance`);
-                }
-            }
-            else {
-                console.log('No need to deposit');
-            }
+        }
+        else {
+            console.log('No need to deposit');
         }
         return calldata_arr;
     }

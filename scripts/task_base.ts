@@ -72,12 +72,11 @@ async function main() {
     feeData = await ethersProvider.getFeeData();
     feeData;
     await sendDegenBatchOrders();
-
+    return
     await optionHolder_test(OptionType.CALL);
     //await optionHolder_test(OptionType.PUT);
 }
 async function sendDegenBatchOrders() {
-    return
     if (!config_holder.ethersSigner) {
         return console.log("signer_Holder miss")
     }

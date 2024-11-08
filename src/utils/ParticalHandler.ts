@@ -16,6 +16,7 @@ export interface ParticalSettings {
     chainId: number;
     ethersProvider: Provider;
     ethersSigner: Signer;
+    minConfirmationCount?: number;
     data: {
         projectUuid: string;
         projectKey: string;
@@ -202,7 +203,7 @@ class ParticalHandler implements TransactionHandler {
             return;
         }
         const tx = await this.getUserOpByHash(res);
-        await tx.wait(1);
+        await tx.wait(this.settings.minConfirmationCount ?? 1);
         console.log('<tx hash>', tx.hash);
         return tx.hash;
     }
