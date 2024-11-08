@@ -441,23 +441,39 @@ export default class OptionTradingAPI {
 
     private async depositPremium(premiumVault: Address, JVaultOrders: JVaultOrder[]): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
+        if (JVaultOrders.length == 0) {
+            return calldata_arr;
+        }
         let depositAmount = ethers.constants.Zero;
-        let premiumAsset = this.jVaultConfig.data.eth;
+        const premiumAsset = JVaultOrders[0].premiumAsset;
         for (let i = 0; i < JVaultOrders.length; i++) {
             const JVaultOrder = JVaultOrders[i];
             if (JVaultOrder.depositData) {
                 if (JVaultOrder.depositData.amount.eq(ethers.constants.Zero) == false) {
                     depositAmount = depositAmount.add(JVaultOrder.depositData.amount);
-                    premiumAsset = JVaultOrder.depositData.token;
                 }
             }
         }
         if (depositAmount.gt(ethers.constants.Zero) == true) {
             if (premiumAsset == this.jVaultConfig.data.eth) {
-
+                const balanceOfEOA = await this.jVaultConfig.ethersProvider.getBalance(this.jVaultConfig.EOA);
+                if (balanceOfEOA.lt(depositAmount) == true) {
+                    throw new Error(`EOA_balance :${balanceOfEOA} Insufficient balance`);
+                }
+                this.eventEmitter.emit('beforeDepositNativeToken', depositAmount);
+                const tx = await this.jVaultConfig.ethersSigner.sendTransaction({
+                    to: premiumVault,
+                    value: depositAmount,
+                });
+                await tx.wait(this.jVaultConfig.data.safeBlock);
+                this.eventEmitter.emit('afterDepositNativeToken', tx.hash);
             }
             else {
                 const premiumAsset_erc20wrapper = new ERC20Wrapper(this.jVaultConfig.ethersSigner, premiumAsset);
+                const balanceOfEOA = await premiumAsset_erc20wrapper.balanceOf(this.jVaultConfig.EOA);
+                if (balanceOfEOA.lt(depositAmount) == true) {
+                    throw new Error(`EOA_balance premiumAsset ${await premiumAsset_erc20wrapper.name()} :${balanceOfEOA} Insufficient balance`);
+                }
                 const allowance = await premiumAsset_erc20wrapper.allowance(this.jVaultConfig.EOA, premiumVault);
                 if (allowance.lt(depositAmount)) {
                     console.log('approve:', depositAmount.toString());
