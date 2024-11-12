@@ -62,7 +62,7 @@ export default class OptionTradingAPI {
         this.txOpts = config.gasSettings;
         if (this.txOpts == undefined) {
             this.txOpts = {
-                baseFee: config.data.defaultFeeData.baseFee,
+                maxFeePerGas: config.data.defaultFeeData.maxFeePerGas,
                 maxPriorityFeePerGas: config.data.defaultFeeData.maxPriorityFeePerGas,
             };
         }
@@ -70,6 +70,7 @@ export default class OptionTradingAPI {
     }
 
     public async getTransactionHandler() {
+
         return this.TransactionHandler;
     }
 

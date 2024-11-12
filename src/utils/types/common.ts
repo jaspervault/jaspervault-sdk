@@ -24,8 +24,8 @@ export interface JVaultConfig {
   data?: NetworkConfig;
   transactionHandler?: TransactionHandler;
   gasSettings?: {
-    baseFee: string;
-    maxPriorityFeePerGas: string;
+    maxFeePerGas: BigNumber;
+    maxPriorityFeePerGas: BigNumber;
   };
 }
 
@@ -138,7 +138,7 @@ export interface NetworkConfig {
   tokens: Token[];
   pyth: string[][];
   defaultFeeData: {
-    baseFee: string;
+    maxFeePerGas: string;
     maxPriorityFeePerGas: string;
   };
   contractData: {

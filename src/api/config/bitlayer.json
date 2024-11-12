@@ -44,7 +44,7 @@
         "VaultFactory": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE"
     },
     "defaultFeeData": {
-        "baseFee": "0.000000007",
+        "maxFeePerGas": "0.050000007",
         "maxPriorityFeePerGas": "0.05"
     },
     "nftWaiver": {
