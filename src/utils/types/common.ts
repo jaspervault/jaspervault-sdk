@@ -23,6 +23,10 @@ export interface JVaultConfig {
   isTest?: boolean;
   data?: NetworkConfig;
   transactionHandler?: TransactionHandler;
+  gasSettings?: {
+    baseFee: string;
+    maxPriorityFeePerGas: string;
+  };
 }
 
 export interface SignedPrice {
@@ -133,6 +137,10 @@ export interface NetworkConfig {
   subgraphUrl: string;
   tokens: Token[];
   pyth: string[][];
+  defaultFeeData: {
+    baseFee: string;
+    maxPriorityFeePerGas: string;
+  };
   contractData: {
     OptionModule: Address;
     OptionModuleV2: Address;

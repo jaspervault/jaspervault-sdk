@@ -22,6 +22,10 @@ async function main() {
         throw new Error("PRIVATE_KEY_HOLDER is not defined in the environment variables");
     }
     let ethersProvider = new ethers.providers.JsonRpcProvider(network_config.rpcUrl);
+    feeData = await ethersProvider.getFeeData();
+    if (!feeData.lastBaseFeePerGas) {
+        throw new Error("lastBaseFeePerGas required");
+    }
     let ethersSigner = new ethers.Wallet(process.env.PRIVATE_KEY_HOLDER, new ethers.providers.JsonRpcProvider(network_config.rpcUrl));
     let particalHandler: ParticalHandler = new ParticalHandler({
         chainId: network_config.chainId,
@@ -57,7 +61,12 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        transactionHandler: coinbaseHandler
+        transactionHandler: coinbaseHandler,
+        gasSettings: {
+            baseFee: feeData == undefined ? network_config.defaultFeeData.baseFee : feeData.lastBaseFeePerGas.toString(),
+            maxPriorityFeePerGas: network_config.defaultFeeData.maxPriorityFeePerGas
+
+        }
     };
 
     jVault_holder = new JVault(config_holder);
@@ -66,11 +75,10 @@ async function main() {
     eventEmitter.on('beforeApprove', (data) => {
         console.log("beforeApprove", data);
     });
-    eventEmitter.on('afterSubmitToBundler', (data) => {
-        console.log("afterSubmitToBundler", data);
-    });
-    feeData = await ethersProvider.getFeeData();
-    feeData;
+    // eventEmitter.on('afterSubmitToBundler', (data) => {
+    //     //console.log("afterSubmitToBundler", data);
+    // });
+
     await sendDegenBatchOrders();
     return
     await optionHolder_test(OptionType.CALL);
@@ -97,7 +105,7 @@ async function sendDegenBatchOrders() {
     console.log(`vaults_0 ${vaults_0}`, ` vaults_1: ${vaults_1}`);
     let txs: JVaultOrder[] = [];
     txs.push({
-        amount: ethers.utils.parseEther('0.001'),
+        amount: ethers.utils.parseEther('0.005'),
         underlyingAsset: ADDRESSES.base.CBBTC,
         optionType: OptionType.CALL,
         premiumAsset: ADDRESSES.base.CBBTC,
@@ -108,7 +116,7 @@ async function sendDegenBatchOrders() {
         secondsToExpiry: 3600 * 2
     });
     txs.push({
-        amount: ethers.utils.parseEther('0.001'),
+        amount: ethers.utils.parseEther('0.005'),
         underlyingAsset: ADDRESSES.base.CBBTC,
         optionType: OptionType.PUT,
         premiumAsset: ADDRESSES.base.CBBTC,
@@ -169,7 +177,7 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     console.log(`vaults_0 ${vaults_0}`, ` vaults_1: ${vaults_1}`);
     if (orderType == OptionType.CALL) {
         try {
-            let tx = await jVault_holder.OptionTradingAPI.createOrder({
+            let tx = await jVault_holder.OptionTradingAPI.createDegenOrder({
                 amount: ethers.utils.parseEther('0.01'),
                 underlyingAsset: ADDRESSES.base.CBBTC,
                 optionType: OptionType.CALL,
@@ -197,7 +205,7 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     }
     else {
         try {
-            let tx = await jVault_holder.OptionTradingAPI.createOrder({
+            let tx = await jVault_holder.OptionTradingAPI.createDegenOrder({
                 amount: ethers.utils.parseEther('0.022'),
                 underlyingAsset: config_holder.data.eth,
                 optionType: OptionType.PUT,

@@ -16,7 +16,7 @@ export default class ERC20Wrapper {
     public async transfer(to: Address, value: Uint256, txOpts: TransactionOverrides = {}): Promise<any> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.transfer(to, value, txOpts);
+            return await erc20.transfer(to, value, txOpts);
         }
         catch (error) {
             console.error('Error transferring asset:', error);
@@ -26,7 +26,7 @@ export default class ERC20Wrapper {
     public async balanceOf(account: Address): Promise<Uint256> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.balanceOf(account);
+            return await erc20.balanceOf(account);
         }
         catch (error) {
             console.error('Error getting balance:', error);
@@ -36,7 +36,7 @@ export default class ERC20Wrapper {
     public async approve(spender: Address, value: Uint256, txOpts: TransactionOverrides = {}): Promise<any> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.approve(spender, value, txOpts);
+            return await erc20.approve(spender, value, txOpts);
         }
         catch (error) {
             console.error('Error approving asset:', error);
@@ -46,7 +46,7 @@ export default class ERC20Wrapper {
     public async allowance(owner: Address, spender: Address): Promise<Uint256> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.allowance(owner, spender);
+            return await erc20.allowance(owner, spender);
         }
         catch (error) {
             console.error('Error getting allowance:', error);
@@ -56,7 +56,7 @@ export default class ERC20Wrapper {
     public async name(): Promise<string> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.name();
+            return await erc20.name();
         }
         catch (error) {
             console.error('Error getting name:', error);
@@ -66,7 +66,7 @@ export default class ERC20Wrapper {
     public async symbol(): Promise<string> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.symbol();
+            return await erc20.symbol();
         }
         catch (error) {
             console.error('Error getting symbol:', error);
@@ -76,7 +76,7 @@ export default class ERC20Wrapper {
     public async decimals(): Promise<number> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.decimals();
+            return await erc20.decimals();
         }
         catch (error) {
             console.error('Error getting decimals:', error);
@@ -86,7 +86,7 @@ export default class ERC20Wrapper {
     public async totalSupply(): Promise<Uint256> {
         try {
             const erc20 = await this.contracts.getERC20(this.ERC20Address);
-            return erc20.totalSupply();
+            return await erc20.totalSupply();
         }
         catch (error) {
             console.error('Error getting total supply:', error);

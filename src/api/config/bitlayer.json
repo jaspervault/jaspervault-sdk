@@ -43,6 +43,10 @@
         "VaultFactoryV2": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE",
         "VaultFactory": "0x7F14d635dcC41AE486B1a7c07C3d38705F0D1eFE"
     },
+    "defaultFeeData": {
+        "baseFee": "0.000000007",
+        "maxPriorityFeePerGas": "0.05"
+    },
     "nftWaiver": {
         "JSBT": "0x5d23B93D82010535B8d6E9bCdDE45b2E8e6a8E12",
         "JSBTIds": [

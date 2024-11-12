@@ -25,6 +25,7 @@ interface VaultResult {
     vaultAddress: string;
 }
 export default class OptionTradingAPI {
+    public txOpts: TransactionOverrides;
     private jVaultConfig: JVaultConfig;
     private OptionModuleV2Wrapper: OptionModuleV2Wrapper;
     private PriceOracleWrapper: PriceOracleWrapper;
@@ -58,6 +59,13 @@ export default class OptionTradingAPI {
             this.TransactionHandler = this.jVaultConfig.transactionHandler;
         }
         this.eventEmitter = new EventEmitter();
+        this.txOpts = config.gasSettings;
+        if (this.txOpts == undefined) {
+            this.txOpts = {
+                baseFee: config.data.defaultFeeData.baseFee,
+                maxPriorityFeePerGas: config.data.defaultFeeData.maxPriorityFeePerGas,
+            };
+        }
 
     }
 
@@ -192,6 +200,8 @@ export default class OptionTradingAPI {
         if (maxVaultSalt.eq(0) || maxVaultSalt.eq(1)) {
             newVaultIndex = BigNumber.from(2);
         }
+        const vault1checkResult = await this.checkAndInitializeVault(ethers.constants.AddressZero);
+        calldata_arr.push(...vault1checkResult.bundlerOP);
         for (let i = 0; i < JVaultOrders.length; i++) {
             if (JVaultOrders[i].optionVault == ethers.constants.AddressZero) {
                 JVaultOrders[i].optionVault = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, newVaultIndex);
@@ -210,7 +220,7 @@ export default class OptionTradingAPI {
 
         for (let i = 0; i < JVaultOrders.length; i++) {
             const JVaultOrder = JVaultOrders[i];
-            const newVaultResult = await this.checkAccount(JVaultOrder);
+            const newVaultResult = await this.checkAndInitializeVault(JVaultOrder.optionVault, JVaultOrder);
             calldata_arr.push(...newVaultResult.bundlerOP);
             JVaultOrder.optionVault = newVaultResult.vaultAddress;
             calldata_arr.push(...await this.submitOrder(JVaultOrder));
@@ -512,29 +522,40 @@ export default class OptionTradingAPI {
         return depositData;
     }
 
-    private async checkAccount(JVaultOrder: JVaultOrder): Promise<VaultResult> {
+    private async checkAndInitializeVault(vaultAddress: Address, JVaultOrder?: JVaultOrder): Promise<VaultResult> {
         const calldata_arr: BundlerOP[] = [];
-        let vaultAddress = ethers.constants.AddressZero;
-        let code = await this.jVaultConfig.ethersProvider.getCode(JVaultOrder.premiumVault);
+        let createVault1: boolean = false;
+        let vault_1: Address = JVaultOrder != undefined ? JVaultOrder.premiumVault : ethers.constants.AddressZero;
+        if (vaultAddress == ethers.constants.AddressZero) {
+            if (JVaultOrder == undefined) {
+                vault_1 = vaultAddress = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, 1);
+            }
+            else {
+                if (vault_1 == ethers.constants.AddressZero) {
+                    vault_1 = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, 1);
+                    createVault1 = true;
+                }
+                if (JVaultOrder.optionVault == ethers.constants.AddressZero) {
+                    const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(this.jVaultConfig.EOA);
+                    let newVaultIndex = maxVaultSalt.add(1);
+                    if (maxVaultSalt.eq(0) || maxVaultSalt.eq(1)) {
+                        newVaultIndex = BigNumber.from(2);
+                    }
+                    vaultAddress = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, newVaultIndex);
+                }
+            }
+        }
+        const code = await this.jVaultConfig.ethersProvider.getCode(vaultAddress);
         if (code == '0x') {
-            console.error('premiumVault has not been created');
-            throw new Error('premiumVault has not been created');
-            // calldata_arr.push(...await this.initializeVault(JVaultOrder.premiumVault, 1));
-            // calldata_arr.push({
-            //     dest: this.jVaultConfig.data.contractData.VaultFactory,
-            //     value: ethers.constants.Zero,
-            //     data: await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, 1, true),
-            // });
-        }
-        else {
-            console.log('premiumVault checkVaultModulesStatus');
-            calldata_arr.push(...await this.initializeVault(JVaultOrder.premiumVault, 1, !await this.checkVaultModulesStatus(JVaultOrder.premiumVault)));
-        }
-        if (JVaultOrder.optionVault != ethers.constants.AddressZero) {
-            if (JVaultOrder.optionVault) {
-                code = await this.jVaultConfig.ethersProvider.getCode(JVaultOrder.optionVault);
-                if (code == '0x') {
-                    vaultAddress = JVaultOrder.optionVault;
+            console.log(`Vault ${vaultAddress} not been created`);
+            if (createVault1 == false) {
+                if (vaultAddress == JVaultOrder.premiumVault) {
+                    createVault1 = true;
+                    vault_1 = JVaultOrder.premiumVault;
+                }
+            }
+            if (JVaultOrder != undefined) {
+                if (vaultAddress == JVaultOrder.optionVault) {
                     calldata_arr.push({
                         dest: this.jVaultConfig.data.contractData.VaultFactory,
                         value: ethers.constants.Zero,
@@ -542,26 +563,28 @@ export default class OptionTradingAPI {
                     });
                     calldata_arr.push(...await this.initializeVault(JVaultOrder.optionVault, JVaultOrder.optionType == OptionType.CALL ? 7 : 3));
                 }
-                else {
-                    calldata_arr.push(...await this.initializeVault(JVaultOrder.optionVault, JVaultOrder.optionType == OptionType.CALL ? 7 : 3));
-                }
             }
         }
         else {
-            const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(this.jVaultConfig.EOA);
-            let newVaultIndex = maxVaultSalt.add(1);
-            if (maxVaultSalt.eq(0) || maxVaultSalt.eq(1)) {
-                newVaultIndex = BigNumber.from(2);
+            if (vaultAddress == vault_1) {
+                console.log('init vault_1:', vault_1);
+                calldata_arr.push(...await this.initializeVault(vaultAddress, 1, !await this.checkVaultModulesStatus(vaultAddress)));
             }
-            vaultAddress = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, newVaultIndex);
-            calldata_arr.push({
-                dest: this.jVaultConfig.data.contractData.VaultFactory,
-                value: ethers.constants.Zero,
-                data: await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, newVaultIndex, true),
-            });
-            calldata_arr.push(...await this.initializeVault(vaultAddress, JVaultOrder.optionType == OptionType.CALL ? 7 : 3));
+            else {
+                calldata_arr.push(...await this.initializeVault(vaultAddress, JVaultOrder.optionType == OptionType.CALL ? 7 : 3, !await this.checkVaultModulesStatus(vaultAddress)));
+            }
         }
+        if (createVault1) {
+            console.log('createVault1:', vault_1);
+            this.eventEmitter.emit('beforeCreateVault1', vault_1);
+            const tx_create_account = await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, 1, false, this.txOpts);
+            await tx_create_account.wait(this.jVaultConfig.data.safeBlock);
+            calldata_arr.push(...await this.initializeVault(vault_1, 1));
+            this.eventEmitter.emit('afterCreateVault1', tx_create_account);
+        }
+
         return { bundlerOP: calldata_arr, vaultAddress: vaultAddress };
+
     }
 
 
@@ -720,7 +743,7 @@ export default class OptionTradingAPI {
                 if (allowance.lt(depositAmount)) {
                     console.log('approve:', depositAmount.toString());
                     this.eventEmitter.emit('beforeApprove', allowance, depositAmount);
-                    const tx = await premiumAsset_erc20wrapper.approve(premiumVault, depositAmount);
+                    const tx = await premiumAsset_erc20wrapper.approve(premiumVault, depositAmount, this.txOpts);
                     await tx.wait(this.jVaultConfig.data.safeBlock);
                     this.eventEmitter.emit('afterApprove', tx);
                 }

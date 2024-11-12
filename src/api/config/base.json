@@ -44,6 +44,10 @@
         "TradingCreditPool": "0xe1598cBA8BF281b96A3F34Fa632f072879716daF",
         "JSBT": "0x0000000000000000000000000000000000000000"
     },
+    "defaultFeeData": {
+        "baseFee": "0.01",
+        "maxPriorityFeePerGas": "0.0001"
+    },
     "tokens": [
         {
             "name": "eth",
