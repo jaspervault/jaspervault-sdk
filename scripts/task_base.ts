@@ -56,7 +56,7 @@ async function main() {
     });
     particalHandler;
     coinbaseHandler;
-    let maxFeePerGas = feeData.lastBaseFeePerGas.add(ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"))
+    let maxFeePerGas = feeData.lastBaseFeePerGas.add(ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei"))
 
     config_holder = {
         ethersProvider: ethersProvider,
