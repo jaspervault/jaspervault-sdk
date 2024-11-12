@@ -62,15 +62,14 @@ export default class OptionTradingAPI {
         this.txOpts = config.gasSettings;
         if (this.txOpts == undefined) {
             this.txOpts = {
-                maxFeePerGas: config.data.defaultFeeData.maxFeePerGas,
-                maxPriorityFeePerGas: config.data.defaultFeeData.maxPriorityFeePerGas,
+                maxFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxFeePerGas, 'gwei'),
+                maxPriorityFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxPriorityFeePerGas, 'gwei'),
             };
         }
 
     }
 
     public async getTransactionHandler() {
-
         return this.TransactionHandler;
     }
 
