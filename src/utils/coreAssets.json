@@ -1473,6 +1473,14 @@
         "DAI": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb",
         "CBBTC": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
     },
+    "base_uat": {
+        "ETH": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "WETH": "0x4200000000000000000000000000000000000006",
+        "USDbC": "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA",
+        "USDC": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+        "DAI": "0x50c5725949a6f0c72e6c4a641f24049a917db0cb",
+        "CBBTC": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf"
+    },
     "sei": {
         "SEI": "usei",
         "WETH": "factory/sei189adguawugk3e55zn63z8r9ll29xrjwca636ra7v7gxuzn98sxyqwzt47l/4tLQqCLaoKKfNFuPjA9o39YbKUwhR1F8N29Tz3hEbfP2",
