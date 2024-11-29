@@ -276,6 +276,8 @@ export default class OptionTradingAPI {
             contractData.PriceOracle,
             contractData.OptionService,
             contractData.VaultPaymaster,
+            contractData.OptionLiquidateService,
+
         ];
         if (this.jVaultConfig.data.nftWaiver) {
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
@@ -649,12 +651,14 @@ export default class OptionTradingAPI {
         const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
         let productTypeIndex = BigNumber.from(0);
         let settingsIndex = BigNumber.from(0);
+        let offerID = BigNumber.from(0);
         for (let i = 0; i < writer_config.length; i++) {
             for (let j = 0; j < writer_config[i].productTypes.length; j++) {
                 if (writer_config[i].underlyingAsset == JVaultOrder.underlyingAsset) {
                     if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
                         productTypeIndex = BigNumber.from(j);
                         settingsIndex = BigNumber.from(i);
+                        offerID = BigNumber.from(writer_config[i].offerID);
                         break;
                     }
                 }
@@ -671,6 +675,9 @@ export default class OptionTradingAPI {
             oracleIndex: BigNumber.from(0),
             premiumSign: JVaultOrder.premiumSign,
             nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
+            optionSourceType: ethers.constants.Zero,
+            liquidationToEOA: false,
+            offerID: offerID,
         };
         console.log('optionOrder:', optionOrder);
         this.eventEmitter.emit('beforeSubmitToBundler', optionOrder);

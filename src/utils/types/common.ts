@@ -161,7 +161,7 @@ export interface NetworkConfig {
     OptionService: Address;
     PriceOracle: Address;
     Manager: Address;
-
+    OptionLiquidateService: Address;
   };
   nftWaiver: {
     JSBT: Address;
