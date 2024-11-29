@@ -38,6 +38,7 @@
         "VaultFactory": "0xB0329dDA9E3707470360e39898670DC9afE10fe1",
         "OptionModuleV2": "0x4De345778a85Cf12aF49c423c75Fe02C5799d425",
         "OptionFacetV2": "0x89F59EBaD0D8933551Aed72b13097Ad7addBE819",
+        "OptionLiquidateService": "0xd1F2166FD19C23d06B12ACa500e2Ee767DcD30D2",
         "JSBT": "0x0000000000000000000000000000000000000000"
     },
     "defaultFeeData": {
