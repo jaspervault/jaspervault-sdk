@@ -103,7 +103,7 @@ export default class OptionTradingAPI {
             if (from == user_wallet) {
                 calldata_arr.push({
                     dest: this.jVaultConfig.data.contractData.IssuanceModule,
-                    value: value,
+                    value: ethers.constants.Zero,
                     data: await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, true, txOpts),
                 });
                 if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {

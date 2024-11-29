@@ -46,7 +46,7 @@
     },
     "defaultFeeData": {
         "maxFeePerGas": "0.0101",
-        "maxPriorityFeePerGas": "0.0001"
+        "maxPriorityFeePerGas": "0.001"
     },
     "tokens": [
         {

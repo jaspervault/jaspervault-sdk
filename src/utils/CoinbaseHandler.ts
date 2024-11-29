@@ -85,21 +85,25 @@ class CoinbaseHandler implements TransactionHandler {
 
         let maxFeePerGas = txOpts.maxFeePerGas;
         let maxPriorityFeePerGas = txOpts.maxPriorityFeePerGas;
+        let gasPriceMultiplier = 1.2;
         if (!maxFeePerGas || !maxPriorityFeePerGas) {
             const ethersFeeData: FeeData = await this.settings.ethersProvider.getFeeData();
-            maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('120')).div(BigNumber.from('100'));
+            maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 100)).div(BigNumber.from('100'));
             if (ethersFeeData.lastBaseFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
                 console.log('lastBaseFeePerGas too low--->', ethers.utils.formatUnits(ethersFeeData.lastBaseFeePerGas, 'gwei'));
-                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('150')).div(BigNumber.from('100'));
-                maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('180')).div(BigNumber.from('100'));
+                gasPriceMultiplier = 1.5;
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 100)).div(BigNumber.from('100'));
+                maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from((gasPriceMultiplier + 0.3) * 100)).div(BigNumber.from('100'));
                 if (maxFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
                     maxFeePerGas = ethers.utils.parseUnits('0.005', 'gwei');
                 }
             }
             else {
-                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from('60')).div(BigNumber.from('100'));
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 0.5 * 100)).div(BigNumber.from('100'));
             }
         }
+        console.log('maxFeePerGas', ethers.utils.formatUnits(maxFeePerGas, 'gwei'));
+        console.log('maxPriorityFeePerGas', ethers.utils.formatUnits(maxPriorityFeePerGas, 'gwei'));
         const unsignOp = {
             sender: vault,
             nonce: nonce,
@@ -155,7 +159,7 @@ class CoinbaseHandler implements TransactionHandler {
             return;
         }
         console.log('estimate gas', res.data.result);
-        const preVerificationGas = parseInt((res.data.result.preVerificationGas * 1.2).toString());
+        const preVerificationGas = parseInt((res.data.result.preVerificationGas * gasPriceMultiplier).toString());
         userOp.preVerificationGas = this.toHex(preVerificationGas);
         userOp.verificationGasLimit = this.toHex(res.data.result.verificationGasLimit);
         userOp.callGasLimit = this.toHex(res.data.result.callGasLimit);

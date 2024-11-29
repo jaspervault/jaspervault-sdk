@@ -42,7 +42,7 @@
     },
     "defaultFeeData": {
         "maxFeePerGas": "0.0101",
-        "maxPriorityFeePerGas": "0.0001"
+        "maxPriorityFeePerGas": "0.001"
     },
     "tokens": [
         {
@@ -58,11 +58,6 @@
         {
             "name": "usdc",
             "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-            "type": 1
-        },
-        {
-            "name": "cbBTC",
-            "address": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
             "type": 1
         }
     ],
@@ -84,12 +79,6 @@
             "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
             "0x0000000000000000000000000000000000000001",
             "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-        ],
-        [
-            "0x2817d7bfe5c64b8ea956e9a26f573ef64e72e4d7891f2d6af9bcc93f7aff9a97",
-            "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-            "0x0000000000000000000000000000000000000001",
-            "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
         ]
     ]
 }
