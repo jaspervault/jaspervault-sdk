@@ -224,15 +224,18 @@ export default class OptionTradingAPI {
             calldata_arr.push(...newVaultResult.bundlerOP);
             JVaultOrder.optionVault = newVaultResult.vaultAddress;
             calldata_arr.push(...await this.submitOrder(JVaultOrder));
-            this.eventEmitter.emit('afterSubmitToBundler', calldata_arr);
         }
         try {
-            if (Object.keys(txOpts).length == 0) {
-                txOpts = this.txOpts;
-                console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
-
+            if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
+                if (Object.keys(txOpts).length == 0) {
+                    txOpts = this.txOpts;
+                    console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
+                }
             }
-            return await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
+            this.eventEmitter.emit('beforeSubmitToBundler', calldata_arr);
+            const tx = await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
+            this.eventEmitter.emit('afterSubmitToBundler', tx);
+            return tx;
 
         }
         catch (error) {
@@ -680,7 +683,6 @@ export default class OptionTradingAPI {
             offerID: offerID,
         };
         console.log('optionOrder:', optionOrder);
-        this.eventEmitter.emit('beforeSubmitToBundler', optionOrder);
 
         if (JVaultOrder.nftId != undefined) {
             console.log('nftId:', JVaultOrder.nftId);
