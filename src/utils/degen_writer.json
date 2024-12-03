@@ -38,5 +38,13 @@
         "PUT": {
             "BTC": "0x887e4fc820323CF72aeD60b15118A7711Ff07081"
         }
+    },
+    "bitlayer_test": {
+        "CALL": {
+            "BTC": "0x0fCa3C98bFB33FA09598dF3FeEA42f1F629c23d9"
+        },
+        "PUT": {
+            "BTC": "0x0fCa3C98bFB33FA09598dF3FeEA42f1F629c23d9"
+        }
     }
 }

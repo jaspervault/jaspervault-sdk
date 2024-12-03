@@ -62,7 +62,7 @@ export default class OptionTradingAPI {
         this.txOpts = config.gasSettings;
         if (this.txOpts == undefined) {
             this.txOpts = {
-                maxFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxFeePerGas, 'gwei'),
+                maxFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxFeePerGas, 'gwei').add(ethers.utils.parseUnits(config.data.defaultFeeData.maxPriorityFeePerGas, 'gwei')),
                 maxPriorityFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxPriorityFeePerGas, 'gwei'),
             };
         }
@@ -229,9 +229,11 @@ export default class OptionTradingAPI {
             if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
                 if (Object.keys(txOpts).length == 0) {
                     txOpts = this.txOpts;
+                    console.log('txOpts:', ethers.utils.formatUnits(txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(txOpts.maxPriorityFeePerGas, 'gwei'));
                     console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
                 }
             }
+
             this.eventEmitter.emit('beforeSubmitToBundler', calldata_arr);
             const tx = await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
             this.eventEmitter.emit('afterSubmitToBundler', tx);
@@ -652,12 +654,14 @@ export default class OptionTradingAPI {
     private async submitOrder(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
         const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
+        console.log('writer_config:', writer_config);
         let productTypeIndex = BigNumber.from(0);
         let settingsIndex = BigNumber.from(0);
         let offerID = BigNumber.from(0);
         for (let i = 0; i < writer_config.length; i++) {
             for (let j = 0; j < writer_config[i].productTypes.length; j++) {
                 if (writer_config[i].underlyingAsset == JVaultOrder.underlyingAsset) {
+                    console.log(writer_config[i].productTypes[j].toString());
                     if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
                         productTypeIndex = BigNumber.from(j);
                         settingsIndex = BigNumber.from(i);

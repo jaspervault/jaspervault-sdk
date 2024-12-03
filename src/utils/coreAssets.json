@@ -57,6 +57,10 @@
         "BTC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         "USDT": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2"
     },
+    "bitlayer_test": {
+        "BTC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "USDT": "0x7ec2a423a5956ab345ebb593c3ab0ee35e6030ce"
+    },
     "fantom": {
         "WFTM": "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
         "USDC": "0x04068da6c83afcfa0e13ba15a6696662335d5b75",
