@@ -98,6 +98,16 @@ export default class OptionTradingAPI {
                 }
                 else {
                     value = value.add(amount[i]);
+                    if (from == user_wallet) {
+                        if (this.TransactionHandler instanceof JaspervaultTransactionHandler == false) {
+                            const tx = await this.jVaultConfig.ethersSigner.sendTransaction({
+                                to: to,
+                                value: amount[i],
+                                ...txOpts,
+                            });
+                            await tx.wait();
+                        }
+                    }
                 }
             }
             if (from == user_wallet) {

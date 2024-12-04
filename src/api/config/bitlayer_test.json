@@ -9,6 +9,7 @@
     "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "",
+    "aproEndpoint": "https://live-api-test.apro.com",
     "rpcUrl": "https://testnet-rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
     "optionQuotesUrl": "https://quotecenterv2-uat-gcx2x.ondigitalocean.app/api/v1/public/signedPrice",
@@ -79,26 +80,16 @@
     ],
     "apro": [
         {
-            "name": "weth",
-            "address": "0x135CFfA0b743c8519ebCdBb5FA1a7c89333999fb",
-            "type": 1,
-            "id": "0x0003555ace6b39aae1b894097d0a9fc17f504c62fea598fa206cc6f5088e6e45"
-        },
-        {
             "name": "btc",
             "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
             "type": 1,
             "id": "0x0003665949c883f9e0f6f002eac32e00bd59dfe6c34e92a91c37d6a8322d6489"
         },
         {
-            "name": "wbtc",
-            "address": "0x3ae6B30BF283698DE9109067d5B62Fb0d8D7f070",
-            "type": 1
-        },
-        {
             "name": "usdt",
             "address": "0x7ec2a423a5956ab345ebb593c3ab0ee35e6030ce",
-            "type": 1
+            "type": 1,
+            "id": "0x00039a0c0be4e43cacda1599ac414205651f4a62b614b6be9e5318a182c33eb0"
         }
     ]
 }
