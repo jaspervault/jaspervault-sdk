@@ -13,7 +13,6 @@ import arbitrumConfig from './api/config/arbitrum.json';
 import baseUatConfig from './api/config/base_uat.json';
 import baseConfig from './api/config/base.json';
 import bitlayerConfig from './api/config/bitlayer.json';
-import bitlayerTestConfig from './api/config/bitlayer_test.json';
 import bnbConfig from './api/config/bnb.json';
 import seiConfig from './api/config/sei.json';
 
@@ -65,7 +64,6 @@ class JVault {
             base_uat: ensureNetworkConfig(baseUatConfig),
             base: ensureNetworkConfig(baseConfig),
             bitlayer: ensureNetworkConfig(bitlayerConfig),
-            bitlayer_test: ensureNetworkConfig(bitlayerTestConfig),
             bnb: ensureNetworkConfig(bnbConfig),
             sei: ensureNetworkConfig(seiConfig),
         };

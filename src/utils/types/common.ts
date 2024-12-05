@@ -116,7 +116,6 @@ export interface Token {
   address: string;
   decimals: number;
   type: number;
-  id: string;
 }
 export interface JSBTId {
   key: string;
@@ -133,13 +132,11 @@ export interface NetworkConfig {
   weth: Address;
   quoteAsset: string;
   pythPriceFeedAddr: Address;
-  aproEndpoint: Address;
   optionQuotesUrl: string;
   rpcUrl: string;
   subgraphUrl: string;
   tokens: Token[];
   pyth: string[][];
-  apro: Token[];
   defaultFeeData: {
     maxFeePerGas: string;
     maxPriorityFeePerGas: string;
@@ -164,7 +161,7 @@ export interface NetworkConfig {
     OptionService: Address;
     PriceOracle: Address;
     Manager: Address;
-    OptionLiquidateService: Address;
+
   };
   nftWaiver: {
     JSBT: Address;

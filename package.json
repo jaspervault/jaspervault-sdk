@@ -1,6 +1,6 @@
 {
     "name": "@jaspervault/jvault.js",
-    "version": "0.2.5",
+    "version": "0.1.9",
     "description": "A javascript library for interacting with the JasperVault Protocol",
     "keywords": [
         "JVault.js",
@@ -64,7 +64,7 @@
         "@0xproject/typescript-typings": "^3.0.2",
         "@0xproject/utils": "^2.0.2",
         "@account-abstraction/sdk": "^0.6.0",
-        "@jaspervault/contracts-v2": "^2.6.1",
+        "@jaspervault/contracts-v2": "2.5.4",
         "@pythnetwork/pyth-evm-js": "^1.56.1",
         "@types/chai-as-promised": "^7.1.3",
         "@types/jest": "^26.0.5",

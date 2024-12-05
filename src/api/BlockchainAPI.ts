@@ -107,16 +107,4 @@ export default class BlockchainAPI {
             spenderAddress
         );
     }
-
-    public async transferAsync(
-        tokenAddress: Address,
-        toAddress: Address,
-        amount: Uint256
-    ) {
-        this.erc20Wrapper = new ERC20Wrapper(this.jVaultConfig.ethersSigner, tokenAddress);
-        return await this.erc20Wrapper.transfer(
-            toAddress,
-            amount
-        );
-    }
 }

@@ -1,14 +1,18 @@
 {
     "arbitrum": {
         "CALL": {
-            "ETH": "0x51c83c3FE5a64EDB1DF6649086B98640780c711c",
-            "WBTC": "0xEA0d5ED7B7F9c2E4a07c1683B6b321745f46c437",
-            "DLCBTC": "0x20cC817Dc3a523AA6f599160269d87232a89ea9c"
+            "ETH": "0x5954B84F4ba745E1A85E9A5875ce3bDf863200ba",
+            "WBTC": "0x3cF1A20AE73ff128D3A40F4492fdE59F2B2D1e8C",
+            "ARB": "0x1eb466780e412C796A7BEdA541CfF47E0571A000",
+            "WSOL": "0x69ff3c3344C4F945205ddeA9A66c99c0A07D8aae",
+            "DLCBTC": "0x7A5A597d5c1D09F919e91Db5A986A4Dd2DEc0Af4"
         },
         "PUT": {
-            "ETH": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254",
-            "WBTC": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254",
-            "DLCBTC": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254"
+            "ETH": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89",
+            "WBTC": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89",
+            "ARB": "0x1DDD814589376Db497F91eFD2E6AFF969822a951",
+            "WSOL": "0x1DDD814589376Db497F91eFD2E6AFF969822a951",
+            "DLCBTC": "0xE26f15B3cc23e8a5adE4c10CCc69e50520eE2a89"
         }
     },
     "base": {
@@ -37,14 +41,6 @@
         },
         "PUT": {
             "BTC": "0x887e4fc820323CF72aeD60b15118A7711Ff07081"
-        }
-    },
-    "bitlayer_test": {
-        "CALL": {
-            "BTC": "0x0fCa3C98bFB33FA09598dF3FeEA42f1F629c23d9"
-        },
-        "PUT": {
-            "BTC": "0x0fCa3C98bFB33FA09598dF3FeEA42f1F629c23d9"
         }
     }
 }

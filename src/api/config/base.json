@@ -11,7 +11,7 @@
     "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
     "rpcUrl": "https://base-mainnet.g.alchemy.com/v2/DiRWMmsF6p2GNC5TLHLHjEyt7p8YjWK_",
     "subgraphUrl": "https://base.subgraph.jaspervault.io",
-    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
+    "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
         "DiamondCutFacet": "0x71F2CDc1F56f0f36D1694B210b4258018D529398",

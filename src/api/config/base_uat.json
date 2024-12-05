@@ -10,7 +10,7 @@
     "quoteAsset": "USDC",
     "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
     "rpcUrl": "https://mainnet.base.org",
-    "subgraphUrl": "https://subgraph.satsuma-prod.com/0981c2ab3685/garys-team/jaspervault-v2-base-uat/api",
+    "subgraphUrl": "https://subgraph.satsuma-prod.com/aadc715bba17/jaspervault--199516/jaspervault-base-uat/api",
     "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
@@ -38,7 +38,6 @@
         "VaultFactory": "0xB0329dDA9E3707470360e39898670DC9afE10fe1",
         "OptionModuleV2": "0x4De345778a85Cf12aF49c423c75Fe02C5799d425",
         "OptionFacetV2": "0x89F59EBaD0D8933551Aed72b13097Ad7addBE819",
-        "OptionLiquidateService": "0xd1F2166FD19C23d06B12ACa500e2Ee767DcD30D2",
         "JSBT": "0x0000000000000000000000000000000000000000"
     },
     "defaultFeeData": {
@@ -60,11 +59,6 @@
             "name": "usdc",
             "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
             "type": 1
-        },
-        {
-            "name": "cbBTC",
-            "address": "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-            "type": 1
         }
     ],
     "pyth": [
@@ -85,12 +79,6 @@
             "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
             "0x0000000000000000000000000000000000000001",
             "0x50834F3163758fcC1Df9973b6e91f0F0F0434aD3"
-        ],
-        [
-            "0x2817d7bfe5c64b8ea956e9a26f573ef64e72e4d7891f2d6af9bcc93f7aff9a97",
-            "0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf",
-            "0x0000000000000000000000000000000000000001",
-            "0xd0C7101eACbB49F3deCcCc166d238410D6D46d57"
         ]
     ]
 }
