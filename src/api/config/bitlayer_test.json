@@ -1,5 +1,5 @@
 {
-    "safeBlock": 2,
+    "safeBlock": 1,
     "chainId": 200810,
     "name": "bitlayer_test",
     "entryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
