@@ -50,15 +50,14 @@
         "NFTFreeOptionPool": "0x86973701f684baadC9152BC6613422e9506F0e3C",
         "OptionModuleV2Handle": "0x198133F681c33E6c3627a0C9896926DC867274e9",
         "OptionLiquidateService": "0x8Bb5e736C67FD8C93A77244d8ab58da6C730e248",
-        "OptionLiquidateHelper": "0xA71d071578bb9d5061FF2804A030a73164158d99",
-        "JSBT": "0xd28f39fa8E33c7E8BeF8405102aeD946178C47e6"
+        "OptionLiquidateHelper": "0xA71d071578bb9d5061FF2804A030a73164158d99"
     },
     "defaultFeeData": {
         "maxFeePerGas": "0.050000007",
         "maxPriorityFeePerGas": "0.05"
     },
     "nftWaiver": {
-        "JSBT": "0x5d23B93D82010535B8d6E9bCdDE45b2E8e6a8E12",
+        "JSBT": "0xd28f39fa8E33c7E8BeF8405102aeD946178C47e6",
         "JSBTIds": [
             {
                 "key": "moonlight",
