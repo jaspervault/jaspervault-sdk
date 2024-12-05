@@ -9,9 +9,10 @@
     "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "",
+    "aproEndpoint": "https://live-api.apro.com",
     "rpcUrl": "https://rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
-    "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",
+    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
         "DiamondCutFacet": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",

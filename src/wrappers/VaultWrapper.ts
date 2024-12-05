@@ -21,6 +21,10 @@ export default class VaultWrapper {
                 return Vault.interface.encodeFunctionData('executeBatch', [dest, value, func]);
             }
             else {
+                if (txOpts.gasLimit == undefined) {
+                    const estimatedGas = await Vault.estimateGas.executeBatch(dest, value, func);
+                    txOpts.gasLimit = estimatedGas.add(estimatedGas.mul(10).div(100));
+                }
                 return await Vault.executeBatch(dest, value, func, txOpts);
             }
         }

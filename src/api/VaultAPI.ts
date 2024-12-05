@@ -98,18 +98,26 @@ export default class OptionTradingAPI {
                 }
                 else {
                     value = value.add(amount[i]);
+                    if (from == user_wallet) {
+                        if (this.TransactionHandler instanceof JaspervaultTransactionHandler == false) {
+                            const tx = await this.jVaultConfig.ethersSigner.sendTransaction({
+                                to: to,
+                                value: amount[i],
+                                ...txOpts,
+                            });
+                            await tx.wait();
+                        }
+                    }
                 }
             }
             if (from == user_wallet) {
                 calldata_arr.push({
                     dest: this.jVaultConfig.data.contractData.IssuanceModule,
-                    value: ethers.constants.Zero,
+                    value: value,
                     data: await this.IssuanceModuleWrapper.issue(to, user_wallet, asset, amount, true, txOpts),
                 });
                 if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
                     return await this.TransactionHandler.sendTransaction(ethers.constants.AddressZero, calldata_arr, txOpts);
-                } else {
-                    return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
                 }
             }
             else if (to == user_wallet) {

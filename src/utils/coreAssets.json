@@ -1,5 +1,6 @@
 {
     "null": "0x0000000000000000000000000000000000000000",
+    "native_token": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
     "ethereum": {
         "WETH": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
         "WSTETH": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0",
@@ -56,6 +57,10 @@
     "bitlayer": {
         "BTC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
         "USDT": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2"
+    },
+    "bitlayer_test": {
+        "BTC": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+        "USDT": "0x7ec2a423a5956ab345ebb593c3ab0ee35e6030ce"
     },
     "fantom": {
         "WFTM": "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",

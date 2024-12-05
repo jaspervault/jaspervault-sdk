@@ -62,7 +62,7 @@ export default class OptionTradingAPI {
         this.txOpts = config.gasSettings;
         if (this.txOpts == undefined) {
             this.txOpts = {
-                maxFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxFeePerGas, 'gwei'),
+                maxFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxFeePerGas, 'gwei').add(ethers.utils.parseUnits(config.data.defaultFeeData.maxPriorityFeePerGas, 'gwei')),
                 maxPriorityFeePerGas: ethers.utils.parseUnits(config.data.defaultFeeData.maxPriorityFeePerGas, 'gwei'),
             };
         }
@@ -192,9 +192,7 @@ export default class OptionTradingAPI {
             throw new Error('No orders to place');
         }
         const calldata_arr: BundlerOP[] = [];
-        if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
-            calldata_arr.push(...await this.setPrice([]));
-        }
+
         const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(this.jVaultConfig.EOA);
         let newVaultIndex = maxVaultSalt.add(1);
         if (maxVaultSalt.eq(0) || maxVaultSalt.eq(1)) {
@@ -202,6 +200,13 @@ export default class OptionTradingAPI {
         }
         const vault1checkResult = await this.checkAndInitializeVault(ethers.constants.AddressZero);
         calldata_arr.push(...vault1checkResult.bundlerOP);
+        if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
+            calldata_arr.push(...await this.setPrice([]));
+        }
+        if (this.jVaultConfig.data.aproEndpoint != '') {
+            calldata_arr.push(...await this.setPrice_APRO([]));
+        }
+
         for (let i = 0; i < JVaultOrders.length; i++) {
             if (JVaultOrders[i].optionVault == ethers.constants.AddressZero) {
                 JVaultOrders[i].optionVault = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, newVaultIndex);
@@ -224,15 +229,20 @@ export default class OptionTradingAPI {
             calldata_arr.push(...newVaultResult.bundlerOP);
             JVaultOrder.optionVault = newVaultResult.vaultAddress;
             calldata_arr.push(...await this.submitOrder(JVaultOrder));
-            this.eventEmitter.emit('afterSubmitToBundler', calldata_arr);
         }
         try {
-            if (Object.keys(txOpts).length == 0) {
-                txOpts = this.txOpts;
-                console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
-
+            if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
+                if (Object.keys(txOpts).length == 0) {
+                    txOpts = this.txOpts;
+                    console.log('txOpts:', ethers.utils.formatUnits(txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(txOpts.maxPriorityFeePerGas, 'gwei'));
+                    console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
+                }
             }
-            return await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
+
+            this.eventEmitter.emit('beforeSubmitToBundler', calldata_arr);
+            const tx = await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
+            this.eventEmitter.emit('afterSubmitToBundler', tx);
+            return tx;
 
         }
         catch (error) {
@@ -276,6 +286,8 @@ export default class OptionTradingAPI {
             contractData.PriceOracle,
             contractData.OptionService,
             contractData.VaultPaymaster,
+            contractData.OptionLiquidateService,
+
         ];
         if (this.jVaultConfig.data.nftWaiver) {
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
@@ -644,17 +656,67 @@ export default class OptionTradingAPI {
         return calldata_arr;
     }
 
+    /**
+     * get APRO setprice data
+     *
+     * @param {string[]} priceIds - The price IDs to fetch price data for.
+     * @returns {Promise<BundlerOP[]>} - A promise that resolves to the calldata array.
+     */
+    private async setPrice_APRO(priceIds: string[]): Promise<BundlerOP[]> {
+        const calldata_arr: BundlerOP[] = [];
+        if (priceIds.length == 0) {
+            for (let i = 0; i < this.jVaultConfig.data.apro.length; i++) {
+                priceIds.push(this.jVaultConfig.data.apro[i].id);
+            }
+        }
+        const feedIDsParam = priceIds.join(',');
+        const timestamp = Math.floor(Date.now() / 1000) - 30;
+
+        try {
+            const response = await axios.get(`${this.jVaultConfig.data.aproEndpoint}/api/v1/reports/bulk`, {
+                params: {
+                    feedIDs: feedIDsParam,
+                    timestamp: timestamp,
+                },
+                headers: {
+                    'Authorization': 'e6a2c31d-0843-4e66-aa02-ec6ee9c06a34',
+                    'X-Authorization-Timestamp': Date.now(),
+                },
+            });
+            if (response.data.reports.length == 0) {
+                throw new Error('Reports empty! Failed to fetch APRO price feed update data');
+            }
+            const priceFeedUpdateData = [];
+
+            for (const i in response.data.reports) {
+                priceFeedUpdateData.push(response.data.reports[i].fullReport);
+            }
+            calldata_arr.push({
+                dest: this.jVaultConfig.data.contractData.PriceOracle,
+                value: ethers.constants.Zero,
+                data: await this.PriceOracleWrapper.setPriceV2(ethers.constants.Zero, priceFeedUpdateData, true),
+            });
+        } catch (error) {
+            console.error('Error fetching price feed update data:', error);
+            throw new Error('Failed to fetch price feed update data');
+        }
+
+        return calldata_arr;
+    }
+
     private async submitOrder(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
         const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
         let productTypeIndex = BigNumber.from(0);
         let settingsIndex = BigNumber.from(0);
+        let offerID = BigNumber.from(0);
         for (let i = 0; i < writer_config.length; i++) {
             for (let j = 0; j < writer_config[i].productTypes.length; j++) {
                 if (writer_config[i].underlyingAsset == JVaultOrder.underlyingAsset) {
                     if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
                         productTypeIndex = BigNumber.from(j);
                         settingsIndex = BigNumber.from(i);
+                        offerID = BigNumber.from(writer_config[i].offerID);
                         break;
                     }
                 }
@@ -671,9 +733,11 @@ export default class OptionTradingAPI {
             oracleIndex: BigNumber.from(0),
             premiumSign: JVaultOrder.premiumSign,
             nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
+            optionSourceType: ethers.constants.Zero,
+            liquidationToEOA: false,
+            offerID: offerID,
         };
         console.log('optionOrder:', optionOrder);
-        this.eventEmitter.emit('beforeSubmitToBundler', optionOrder);
 
         if (JVaultOrder.nftId != undefined) {
             console.log('nftId:', JVaultOrder.nftId);
@@ -757,6 +821,9 @@ export default class OptionTradingAPI {
                     value: ethers.constants.Zero,
                     data: await this.IssuanceModuleWrapper.issue(premiumVault, this.jVaultConfig.EOA, [premiumAsset], [depositAmount], true),
                 });
+                console.log('depositAmount:', depositAmount.toString());
+                console.log('premiumVault:', premiumVault);
+                console.log('premiumAsset:', premiumAsset);
             }
         }
         else {

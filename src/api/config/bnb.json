@@ -11,7 +11,7 @@
     "pythPriceFeedAddr": "0x4D7E825f80bDf85e913E0DD2A2D54927e9dE1594",
     "rpcUrl": "https://bnb-mainnet.g.alchemy.com/v2/O6KV2NWJZqZZELxRphDj0OaGu0mQ5fha",
     "subgraphUrl": "https://subgraph.satsuma-prod.com/0981c2ab3685/garys-team/jaspervault-v2-bsc/api",
-    "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",
+    "optionQuotesUrl": "https://uat-jasperquotecenter.fly.dev/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
         "DiamondCutFacet": "0xf2557A44DC8cB2CF326DE1Bd13209AB67913C6d5",
