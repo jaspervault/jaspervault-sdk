@@ -119,4 +119,14 @@ export default class BlockchainAPI {
             amount
         );
     }
+
+    public async transferNativeTokenAsync(
+        toAddress: Address,
+        amount: Uint256
+    ) {
+        return await this.jVaultConfig.ethersSigner.sendTransaction({
+            to: toAddress,
+            value: amount,
+        });
+    }
 }

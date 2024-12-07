@@ -96,6 +96,7 @@ export default class OptionTradingAPI {
         try {
             const asset_type: BigNumber[] = [];
             const calldata_arr: BundlerOP[] = [];
+
             if (Object.keys(txOpts).length == 0) {
                 txOpts = this.txOpts;
             }
@@ -105,29 +106,26 @@ export default class OptionTradingAPI {
             }
             const vault1 = await this.initNewAccount();
             calldata_arr.push(...await this.initializeVault(vault1, 1, !await this.checkVaultModulesStatus(vault1)));
-
             const user_wallet = this.jVaultConfig.EOA;
-            let erc20transfer: boolean = false;
             for (let i = 0; i < assetsArr.length; i++) {
                 if (assetsArr[i] != this.jVaultConfig.data.eth) {
-                    erc20transfer = true;
                     const erc20wrapper = new ERC20Wrapper(this.jVaultConfig.ethersSigner, assetsArr[i]);
                     const allowance = await erc20wrapper.allowance(user_wallet, vault1);
                     if (allowance.lt(amountArr[i])) {
                         await (await erc20wrapper.approve(vault1, amountArr[i], txOpts)).wait(this.jVaultConfig.data.safeBlock);
                     }
+
                 }
                 else {
                     value = value.add(amountArr[i]);
                     if (from.toLocaleLowerCase() == user_wallet.toLocaleLowerCase()) {
-                        if (this.TransactionHandler instanceof JaspervaultTransactionHandler == false) {
-                            const tx = await this.jVaultConfig.ethersSigner.sendTransaction({
-                                to: to,
-                                value: amountArr[i],
-                                ...txOpts,
-                            });
-                            await tx.wait();
-                        }
+                        const tx = await this.jVaultConfig.ethersSigner.sendTransaction({
+                            to: to,
+                            value: amountArr[i],
+                            ...txOpts,
+                        });
+                        await tx.wait(this.jVaultConfig.data.safeBlock);
+                        return tx.hash;
                     }
                 }
             }
@@ -137,14 +135,7 @@ export default class OptionTradingAPI {
                     value: value,
                     data: await this.IssuanceModuleWrapper.issue(to, user_wallet, assetsArr, amountArr, true, txOpts),
                 });
-                if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
-                    return await this.TransactionHandler.sendTransaction(ethers.constants.AddressZero, calldata_arr, txOpts);
-                }
-                else {
-                    if (erc20transfer) {
-                        return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
-                    }
-                }
+                return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
             }
             else if (to.toLowerCase() == user_wallet.toLowerCase()) {
                 calldata_arr.push({
@@ -153,7 +144,7 @@ export default class OptionTradingAPI {
                     data: await this.IssuanceModuleWrapper.redeem(vault1, asset_type, assetsArr, amountArr, true, txOpts),
                 });
                 if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
-                    return await this.TransactionHandler.sendTransaction(ethers.constants.AddressZero, calldata_arr, txOpts);
+                    return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);
                 }
                 else {
                     return await this.TransactionHandler.sendTransaction(vault1, calldata_arr, txOpts);

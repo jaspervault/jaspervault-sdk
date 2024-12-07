@@ -506,6 +506,7 @@ export default class OptionTradingAPI {
         };
         if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
             const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
+            console.log('premium:', premium.toString());
             let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
             if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
                 balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
@@ -821,9 +822,6 @@ export default class OptionTradingAPI {
                     value: ethers.constants.Zero,
                     data: await this.IssuanceModuleWrapper.issue(premiumVault, this.jVaultConfig.EOA, [premiumAsset], [depositAmount], true),
                 });
-                console.log('depositAmount:', depositAmount.toString());
-                console.log('premiumVault:', premiumVault);
-                console.log('premiumAsset:', premiumAsset);
             }
         }
         else {
