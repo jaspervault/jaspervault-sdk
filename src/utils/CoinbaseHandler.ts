@@ -11,6 +11,7 @@ import { Provider } from '@ethersproject/providers';
 import { Signer } from '@ethersproject/abstract-signer';
 import { FeeData } from '@ethersproject/abstract-provider';
 import { TransactionHandler } from './JaspervaultTransactionHandler';
+import { EventEmitter } from 'events';
 
 export interface CoinbaseSettings {
     chainId: number;
@@ -30,11 +31,13 @@ class CoinbaseHandler implements TransactionHandler {
     private EntryPointWrapper: EntryPointWrapper;
     private VaultFactoryWrapper: VaultFactoryWrapper;
     private settings: CoinbaseSettings;
+    private eventEmitter: EventEmitter;
 
     constructor(settings: CoinbaseSettings) {
         this.settings = settings;
         this.EntryPointWrapper = new EntryPointWrapper(settings.ethersSigner, settings.data.contractData.EntryPoint);
         this.VaultFactoryWrapper = new VaultFactoryWrapper(settings.ethersSigner, settings.data.contractData.VaultFactory);
+        this.eventEmitter = new EventEmitter();
 
         this.accountAPI = new SimpleAccountAPI({
             provider: settings.ethersProvider,
@@ -43,8 +46,9 @@ class CoinbaseHandler implements TransactionHandler {
             factoryAddress: settings.data.contractData.VaultFactory,
             index: 0,
         });
-
-
+    }
+    public getEventEmitter(): EventEmitter {
+        return this.eventEmitter;
     }
 
     async sendTransaction(
@@ -57,7 +61,6 @@ class CoinbaseHandler implements TransactionHandler {
         const value = [];
         const func = [];
         const code = await this.settings.ethersProvider.getCode(vault);
-
 
         let vaule_tx = ethers.constants.Zero;
         op_arr.forEach(element => {
@@ -208,6 +211,7 @@ class CoinbaseHandler implements TransactionHandler {
         console.log(options);
 
         console.log('bundlerUrl', bundlerUrl);
+        this.eventEmitter.emit('beforeSubmitToBundler', op_arr);
         res = await axios.post(bundlerUrl, options);
         if (res.data.error) {
             console.log('eth_sendUserOperation error: ', res.data);
@@ -216,6 +220,7 @@ class CoinbaseHandler implements TransactionHandler {
             return;
         }
         const tx = await this.getUserOpByHash(res);
+        this.eventEmitter.emit('afterSubmitToBundler', tx);
         await tx.wait(1);
         console.log('<tx hash>', tx.hash);
         return tx.hash;

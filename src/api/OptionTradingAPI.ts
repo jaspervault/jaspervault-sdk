@@ -59,6 +59,14 @@ export default class OptionTradingAPI {
             this.TransactionHandler = this.jVaultConfig.transactionHandler;
         }
         this.eventEmitter = new EventEmitter();
+        const eventEmitter = this.TransactionHandler.getEventEmitter();
+        eventEmitter.on('beforeSubmitToBundler', (data) => {
+            this.eventEmitter.emit('beforeSubmitToBundler', data);
+        });
+        eventEmitter.on('afterSubmitToBundler', (data) => {
+            this.eventEmitter.emit('afterSubmitToBundler', data);
+        });
+
         this.txOpts = config.gasSettings;
         if (this.txOpts == undefined) {
             this.txOpts = {
@@ -239,9 +247,7 @@ export default class OptionTradingAPI {
                 }
             }
 
-            this.eventEmitter.emit('beforeSubmitToBundler', calldata_arr);
             const tx = await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
-            this.eventEmitter.emit('afterSubmitToBundler', tx);
             return tx;
 
         }

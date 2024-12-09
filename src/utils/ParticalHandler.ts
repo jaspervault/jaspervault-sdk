@@ -11,6 +11,7 @@ import { Provider } from '@ethersproject/providers';
 import { Signer } from '@ethersproject/abstract-signer';
 
 import { TransactionHandler } from './JaspervaultTransactionHandler';
+import { EventEmitter } from 'events';
 
 export interface ParticalSettings {
     chainId: number;
@@ -34,11 +35,13 @@ class ParticalHandler implements TransactionHandler {
     private EntryPointWrapper: EntryPointWrapper;
     private VaultFactoryWrapper: VaultFactoryWrapper;
     private settings: ParticalSettings;
+    private eventEmitter: EventEmitter;
 
     constructor(settings: ParticalSettings) {
         this.settings = settings;
         this.EntryPointWrapper = new EntryPointWrapper(settings.ethersSigner, settings.data.contractData.EntryPoint);
         this.VaultFactoryWrapper = new VaultFactoryWrapper(settings.ethersSigner, settings.data.contractData.VaultFactory);
+        this.eventEmitter = new EventEmitter();
 
         this.accountAPI = new SimpleAccountAPI({
             provider: settings.ethersProvider,
@@ -47,8 +50,10 @@ class ParticalHandler implements TransactionHandler {
             factoryAddress: settings.data.contractData.VaultFactory,
             index: 0,
         });
+    }
 
-
+    public getEventEmitter(): EventEmitter {
+        return this.eventEmitter;
     }
 
     async sendTransaction(
@@ -194,6 +199,7 @@ class ParticalHandler implements TransactionHandler {
             'jsonrpc': '2.0',
             'chainId': chainID,
         };
+        this.eventEmitter.emit('beforeSubmitToBundler', op_arr);
 
         res = await axios.post(`${this.settings.data.bundlerUrl}#eth_sendUserOperation`, options);
         if (res.data.error) {
@@ -203,6 +209,8 @@ class ParticalHandler implements TransactionHandler {
             return;
         }
         const tx = await this.getUserOpByHash(res);
+        this.eventEmitter.emit('afterSubmitToBundler', tx);
+
         await tx.wait(this.settings.minConfirmationCount ?? 1);
         console.log('<tx hash>', tx.hash);
         return tx.hash;

@@ -11,7 +11,7 @@
     "pythPriceFeedAddr": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
     "rpcUrl": "https://arb1.arbitrum.io/rpc",
     "subgraphUrl": "https://gateway-arbitrum.network.thegraph.com/api/7ca317c1d6347234f75513585a71157c/subgraphs/id/HkE4i846HyUEbmBg7cTawRqbTXQZnJ8VGwMfgVjdH19F",
-    "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
+    "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
         "DiamondCutFacet": "0x462482E07D7b2AfFAD9d934544bfFB24Dbcb019A",
