@@ -211,7 +211,7 @@ export default class OptionTradingAPI {
         if (this.jVaultConfig.data.pythPriceFeedAddr != '') {
             calldata_arr.push(...await this.setPrice([]));
         }
-        if (this.jVaultConfig.data.aproEndpoint != '') {
+        if (this.jVaultConfig.data.aproEndpoint != undefined) {
             calldata_arr.push(...await this.setPrice_APRO([]));
         }
 
@@ -533,7 +533,7 @@ export default class OptionTradingAPI {
                     depositData.amount = transferAmount;
                 }
                 else {
-                    throw new Error(`EOA_balance premiumAsset :${EOA_balance} Insufficient balance`);
+                    throw new Error(`getDepositData:EOA_balance premiumAsset :${EOA_balance} Insufficient balance`);
                 }
             }
             else {
@@ -591,7 +591,6 @@ export default class OptionTradingAPI {
             if (vaultAddress == vault_1) {
                 console.log('init vault_1:', vault_1);
                 calldata_arr.push(...await this.initializeVault(vaultAddress, 1, !await this.checkVaultModulesStatus(vaultAddress)));
-                console.log('init vault_1 end');
             }
             else {
                 calldata_arr.push(...await this.initializeVault(vaultAddress, JVaultOrder.optionType == OptionType.CALL ? 7 : 3, !await this.checkVaultModulesStatus(vaultAddress)));
