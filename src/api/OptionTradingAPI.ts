@@ -60,10 +60,10 @@ export default class OptionTradingAPI {
         }
         this.eventEmitter = new EventEmitter();
         const eventEmitter = this.TransactionHandler.getEventEmitter();
-        eventEmitter.on('beforeSubmitToBundler', (data) => {
+        eventEmitter.on('beforeSubmitToBundler', data => {
             this.eventEmitter.emit('beforeSubmitToBundler', data);
         });
-        eventEmitter.on('afterSubmitToBundler', (data) => {
+        eventEmitter.on('afterSubmitToBundler', data => {
             this.eventEmitter.emit('afterSubmitToBundler', data);
         });
 
@@ -292,8 +292,6 @@ export default class OptionTradingAPI {
             contractData.PriceOracle,
             contractData.OptionService,
             contractData.VaultPaymaster,
-            contractData.OptionLiquidateService,
-
         ];
         if (this.jVaultConfig.data.nftWaiver) {
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
