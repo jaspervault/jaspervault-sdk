@@ -344,7 +344,6 @@ export default class OptionTradingAPI {
             contractData.PriceOracle,
             contractData.OptionService,
             contractData.VaultPaymaster,
-            contractData.OptionLiquidateService,
 
         ];
         if (this.jVaultConfig.data.nftWaiver) {

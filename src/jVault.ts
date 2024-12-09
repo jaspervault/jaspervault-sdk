@@ -34,6 +34,7 @@ function ensureNetworkConfig(config: any): NetworkConfig {
         pythPriceFeedAddr: config.pythPriceFeedAddr || config.pythAddr || '',
         rpcUrl: config.rpcUrl || '',
         subgraphUrl: config.subgraphUrl || '',
+        aproAuthorization: process.env.APRO_AUTHORIZATION || process.env.REACT_APP_APRO_AUTHORIZATION || '',
     };
 }
 

@@ -591,6 +591,7 @@ export default class OptionTradingAPI {
             if (vaultAddress == vault_1) {
                 console.log('init vault_1:', vault_1);
                 calldata_arr.push(...await this.initializeVault(vaultAddress, 1, !await this.checkVaultModulesStatus(vaultAddress)));
+                console.log('init vault_1 end');
             }
             else {
                 calldata_arr.push(...await this.initializeVault(vaultAddress, JVaultOrder.optionType == OptionType.CALL ? 7 : 3, !await this.checkVaultModulesStatus(vaultAddress)));
@@ -684,7 +685,7 @@ export default class OptionTradingAPI {
                     timestamp: timestamp,
                 },
                 headers: {
-                    'Authorization': 'e6a2c31d-0843-4e66-aa02-ec6ee9c06a34',
+                    'Authorization': this.jVaultConfig.data.aproAuthorization,
                     'X-Authorization-Timestamp': Date.now(),
                 },
             });

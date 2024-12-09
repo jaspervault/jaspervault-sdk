@@ -10,6 +10,7 @@
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "",
     "aproEndpoint": "https://live-api.apro.com",
+    "aproAuthorization": "e6a2c31d-0843-4e66-aa02-ec6ee9c06a34",
     "rpcUrl": "https://rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
     "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",
@@ -125,6 +126,20 @@
             "wbtc": "0xff204e2681a6fa0e2c3fade68a1b28fb90e4fc5f",
             "usd": "0x0000000000000000000000000000000000000001",
             "oracle": "0x29304f0c6fd0db604312d6e982164e1e7c3adad9"
+        }
+    ],
+    "apro": [
+        {
+            "name": "btc",
+            "address": "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE",
+            "type": 1,
+            "id": "0x0003665949c883f9e0f6f002eac32e00bd59dfe6c34e92a91c37d6a8322d6489"
+        },
+        {
+            "name": "usdt",
+            "address": "0xfe9f969faf8ad72a83b761138bf25de87eff9dd2",
+            "type": 1,
+            "id": "0x00039a0c0be4e43cacda1599ac414205651f4a62b614b6be9e5318a182c33eb0"
         }
     ],
     "pyth": []

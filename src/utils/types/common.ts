@@ -134,6 +134,7 @@ export interface NetworkConfig {
   quoteAsset: string;
   pythPriceFeedAddr: Address;
   aproEndpoint: Address;
+  aproAuthorization: string;
   optionQuotesUrl: string;
   rpcUrl: string;
   subgraphUrl: string;

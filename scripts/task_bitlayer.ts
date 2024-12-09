@@ -118,7 +118,7 @@ async function sendDegenBatchOrders() {
         }
     }
     catch (error) {
-        console.error(`submit order failed: ${error}`);
+        console.error(`createDegenBatchOrders: ${error}`);
     }
 }
 
