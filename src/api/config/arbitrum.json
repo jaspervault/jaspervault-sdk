@@ -9,6 +9,7 @@
     "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "0xff1a0f4744e8582DF1aE09D5611b887B6a12925C",
+    "apiBase": "https://apiv2.jaspervault.io",
     "rpcUrl": "https://arb1.arbitrum.io/rpc",
     "subgraphUrl": "https://gateway-arbitrum.network.thegraph.com/api/7ca317c1d6347234f75513585a71157c/subgraphs/id/HkE4i846HyUEbmBg7cTawRqbTXQZnJ8VGwMfgVjdH19F",
     "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",

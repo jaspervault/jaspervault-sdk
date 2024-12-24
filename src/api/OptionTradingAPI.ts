@@ -19,6 +19,7 @@ import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/'
 import optionWriterConfig from '../utils/degen_writer.json';
 import ADDRESSES from '../utils/coreAssets.json';
 import { EventEmitter } from 'events';
+import logger from '../utils/j_logger';
 import { TransactionHandler, JaspervaultTransactionHandler } from '../utils/JaspervaultTransactionHandler';
 interface VaultResult {
     bundlerOP: BundlerOP[];
@@ -146,11 +147,12 @@ export default class OptionTradingAPI {
                     timestamp: BigNumber.from(signedData.timestamp),
                     oracleSign: signedData.oracle_sign,
                 };
+                // logger.info('premiumSign:', premiumSign);
                 this.eventEmitter.emit('afterFetchQuote', premiumSign);
                 return premiumSign;
             }
         } catch (error) {
-            console.error('Error making fetchSignData request:', error);
+            logger.error('Error making fetchSignData request:', error);
             throw error;
         }
     }
@@ -223,8 +225,8 @@ export default class OptionTradingAPI {
             }
             const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = await this.fetchSignData(JVaultOrders[i]);
             JVaultOrders[i].premiumSign = premiumSign;
+            logger.info('premiumSign:', premiumSign);
             JVaultOrders[i].depositData = await this.getDepositData(JVaultOrders[i]);
-            console.log('premiumSign:', premiumSign);
         }
         const depositPremiumOP = await this.depositPremium(JVaultOrders[0].premiumVault, JVaultOrders);
         if (depositPremiumOP.length > 0) {
@@ -242,8 +244,8 @@ export default class OptionTradingAPI {
             if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
                 if (Object.keys(txOpts).length == 0) {
                     txOpts = this.txOpts;
-                    console.log('txOpts:', ethers.utils.formatUnits(txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(txOpts.maxPriorityFeePerGas, 'gwei'));
-                    console.log('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
+                    logger.info('txOpts:', ethers.utils.formatUnits(txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(txOpts.maxPriorityFeePerGas, 'gwei'));
+                    logger.info('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
                 }
             }
 
@@ -252,7 +254,7 @@ export default class OptionTradingAPI {
 
         }
         catch (error) {
-            console.error('Error Placing order:', error);
+            logger.error('Error Placing order:', error);
         }
     }
 
@@ -274,7 +276,7 @@ export default class OptionTradingAPI {
         const result = await this.ManagerWrapper.multiCall(targets, data);
         for (let i = 0; i < result.length; i++) {
             const status = managerContract.interface.decodeFunctionResult('getVaultModuleStatus', result[i])[0];
-            // console.log('module  --> status:', getActiveModules[i], status);
+            // logger.info('module  --> status:', getActiveModules[i], status);
             if (status == false) {
                 return false;
             }
@@ -325,7 +327,7 @@ export default class OptionTradingAPI {
                 JVaultOrder.strikeAsset,
                 JVaultOrder.strikeAmount);
         }
-        console.log('Earnings:', earnings);
+        logger.info('Earnings:', earnings);
         calldata_arr.push({
             dest: this.jVaultConfig.data.contractData.OptionService,
             value: ethers.constants.Zero,
@@ -341,7 +343,7 @@ export default class OptionTradingAPI {
             return await this.TransactionHandler.sendTransaction(JVaultOrder.premiumVault, calldata_arr, txOpts);
         }
         catch (error) {
-            console.error('Error liquidateOrder:', error);
+            logger.error('Error liquidateOrder:', error);
         }
     }
 
@@ -488,7 +490,7 @@ export default class OptionTradingAPI {
             }
             return orders;
         } catch (error) {
-            console.error('Error fetching order data:', error);
+            logger.error('Error fetching order data:', error);
             return undefined;
         }
     }
@@ -510,7 +512,7 @@ export default class OptionTradingAPI {
         };
         if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
             const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
-            console.log('premium:', premium.toString());
+            logger.info(`premium:${premium}`);
             let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
             if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
                 balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
@@ -519,6 +521,7 @@ export default class OptionTradingAPI {
                 const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
                 balanceOfPremiumVault = await premium_asset.balanceOf(JVaultOrder.premiumVault);
             }
+            logger.info(`balanceOfPremiumVault:${balanceOfPremiumVault.toString()}`);
             if (balanceOfPremiumVault.lt(premium) == true) {
                 const transferAmount = premium.sub(balanceOfPremiumVault).mul(BigNumber.from(101)).div(BigNumber.from(100));
                 let EOA_balance = ethers.constants.Zero;
@@ -536,9 +539,6 @@ export default class OptionTradingAPI {
                     throw new Error(`getDepositData:EOA_balance premiumAsset :${EOA_balance} Insufficient balance`);
                 }
             }
-            else {
-                console.log('No need to deposit');
-            }
         }
 
         return depositData;
@@ -546,7 +546,6 @@ export default class OptionTradingAPI {
 
     private async checkAndInitializeVault(vaultAddress: Address, JVaultOrder?: JVaultOrder): Promise<VaultResult> {
         const calldata_arr: BundlerOP[] = [];
-        let createVault1: boolean = false;
         let vault_1: Address = JVaultOrder != undefined ? JVaultOrder.premiumVault : ethers.constants.AddressZero;
         if (vaultAddress == ethers.constants.AddressZero) {
             if (JVaultOrder == undefined) {
@@ -555,7 +554,6 @@ export default class OptionTradingAPI {
             else {
                 if (vault_1 == ethers.constants.AddressZero) {
                     vault_1 = await this.VaultFactoryWrapper.getAddress(this.jVaultConfig.EOA, 1);
-                    createVault1 = true;
                 }
                 if (JVaultOrder.optionVault == ethers.constants.AddressZero) {
                     const maxVaultSalt = await this.VaultFactoryWrapper.getVaultMaxSalt(this.jVaultConfig.EOA);
@@ -569,13 +567,7 @@ export default class OptionTradingAPI {
         }
         const code = await this.jVaultConfig.ethersProvider.getCode(vaultAddress);
         if (code == '0x') {
-            console.log(`Vault ${vaultAddress} not been created`);
-            if (createVault1 == false) {
-                if (vaultAddress == JVaultOrder.premiumVault) {
-                    createVault1 = true;
-                    vault_1 = JVaultOrder.premiumVault;
-                }
-            }
+            logger.info(`Vault ${vaultAddress} not been created`);
             if (JVaultOrder != undefined) {
                 if (vaultAddress == JVaultOrder.optionVault) {
                     calldata_arr.push({
@@ -586,24 +578,21 @@ export default class OptionTradingAPI {
                     calldata_arr.push(...await this.initializeVault(JVaultOrder.optionVault, JVaultOrder.optionType == OptionType.CALL ? 7 : 3));
                 }
             }
+            else {
+                logger.info(`vault_1 code = 0x: ${vault_1}`);
+                calldata_arr.push(...await this.initializeVault(vaultAddress, 1));
+            }
         }
         else {
             if (vaultAddress == vault_1) {
-                console.log('init vault_1:', vault_1);
+                logger.info('check is init vault_1:', vault_1);
                 calldata_arr.push(...await this.initializeVault(vaultAddress, 1, !await this.checkVaultModulesStatus(vaultAddress)));
             }
             else {
                 calldata_arr.push(...await this.initializeVault(vaultAddress, JVaultOrder.optionType == OptionType.CALL ? 7 : 3, !await this.checkVaultModulesStatus(vaultAddress)));
             }
         }
-        if (createVault1) {
-            console.log('createVault1:', vault_1);
-            this.eventEmitter.emit('beforeCreateVault1', vault_1);
-            const tx_create_account = await this.VaultFactoryWrapper.createAccount(this.jVaultConfig.EOA, 1, false, this.txOpts);
-            await tx_create_account.wait(this.jVaultConfig.data.safeBlock);
-            calldata_arr.push(...await this.initializeVault(vault_1, 1));
-            this.eventEmitter.emit('afterCreateVault1', tx_create_account);
-        }
+
 
         return { bundlerOP: calldata_arr, vaultAddress: vaultAddress };
 
@@ -675,7 +664,7 @@ export default class OptionTradingAPI {
             }
         }
         const feedIDsParam = priceIds.join(',');
-        const timestamp = Math.floor(Date.now() / 1000) - 30;
+        const timestamp = Math.floor(Date.now() / 1000) - 1;
 
         try {
             const response = await axios.get(`${this.jVaultConfig.data.aproEndpoint}/api/v1/reports/bulk`, {
@@ -702,7 +691,7 @@ export default class OptionTradingAPI {
                 data: await this.PriceOracleWrapper.setPriceV2(ethers.constants.Zero, priceFeedUpdateData, true),
             });
         } catch (error) {
-            console.error('Error fetching price feed update data:', error);
+            logger.error('Error fetching price feed update data:', error);
             throw new Error('Failed to fetch price feed update data');
         }
 
@@ -742,10 +731,10 @@ export default class OptionTradingAPI {
             liquidationToEOA: false,
             offerID: offerID,
         };
-        console.log('optionOrder:', optionOrder);
+        logger.info('optionOrder:', optionOrder);
 
         if (JVaultOrder.nftId != undefined) {
-            console.log('nftId:', JVaultOrder.nftId);
+            logger.info('nftId:', JVaultOrder.nftId);
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
                 const setAboutToUseNftId_abi = [
                     {
@@ -815,7 +804,7 @@ export default class OptionTradingAPI {
                 }
                 const allowance = await premiumAsset_erc20wrapper.allowance(this.jVaultConfig.EOA, premiumVault);
                 if (allowance.lt(depositAmount)) {
-                    console.log('approve:', depositAmount.toString());
+                    logger.info('approve:', depositAmount.toString());
                     this.eventEmitter.emit('beforeApprove', allowance, depositAmount);
                     const tx = await premiumAsset_erc20wrapper.approve(premiumVault, depositAmount, this.txOpts);
                     await tx.wait(this.jVaultConfig.data.safeBlock);
@@ -829,7 +818,7 @@ export default class OptionTradingAPI {
             }
         }
         else {
-            console.log('No need to deposit');
+            logger.info('No need to deposit');
         }
         return calldata_arr;
     }
@@ -843,7 +832,7 @@ export default class OptionTradingAPI {
     private getTokenNamebyAddress(address: string, chain: string): string {
         const chainTokens = ADDRESSES[chain];
         if (!chainTokens) {
-            console.error(`Chain ${chain} not found`);
+            logger.error(`Chain ${chain} not found`);
             return undefined;
         }
         for (const [tokenName, tokenAddress] of Object.entries(chainTokens)) {
@@ -851,7 +840,7 @@ export default class OptionTradingAPI {
                 return tokenName;
             }
         }
-        console.error(`Address ${address} not found on chain ${chain}`);
+        logger.error(`Address ${address} not found on chain ${chain}`);
         return undefined;
     }
 }

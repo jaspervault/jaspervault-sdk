@@ -73,7 +73,17 @@ class ParticalHandler implements TransactionHandler {
             vaule_tx = vaule_tx.add(element.value);
             func.push(element.data);
         });
-        const vaultIndex = await this.VaultFactoryWrapper.getVaultToSalt(vault);
+        let vaultIndex = await this.VaultFactoryWrapper.getVaultToSalt(vault);
+        if (vaultIndex == 0) {
+            const vault_salt = 1;
+            while (vaultIndex == 0) {
+                const vault_address = await this.VaultFactoryWrapper.getAddress(await this.settings.ethersSigner.getAddress(), vault_salt);
+                if (vault_address == vault) {
+                    vaultIndex = vault_salt;
+                    break;
+                }
+            }
+        }
         this.accountAPI = new SimpleAccountAPI({
             provider: this.settings.ethersProvider,
             entryPointAddress: this.settings.data.contractData.EntryPoint,
@@ -82,8 +92,11 @@ class ParticalHandler implements TransactionHandler {
             index: vaultIndex,
         });
         const nonce = await this.EntryPointWrapper.getNonce(vault, 0);
-        const initCode = '0x';
-
+        let initCode = '0x';
+        const code = await this.settings.ethersProvider.getCode(vault);
+        if (code == '0x') {
+            initCode = await this.accountAPI.getAccountInitCode();
+        }
         const Vault = new VaultWrapper(this.settings.ethersSigner, vault);
         const calldata = await Vault.executeBatch(dest, value, func, true);
         // const feeData: FeeData = await this.config.ethersProvider.getFeeData();
@@ -140,7 +153,6 @@ class ParticalHandler implements TransactionHandler {
             console.log('eth_estimateUserOperationGas error: ', res.data);
             return;
         }
-
         userOp.preVerificationGas = this.toHex(res.data.result.preVerificationGas);
         userOp.verificationGasLimit = this.toHex(res.data.result.verificationGasLimit);
         userOp.callGasLimit = this.toHex(res.data.result.callGasLimit);

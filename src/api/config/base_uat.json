@@ -9,6 +9,7 @@
     "weth": "0x4200000000000000000000000000000000000006",
     "quoteAsset": "USDC",
     "pythPriceFeedAddr": "0x8250f4aF4B972684F7b336503E2D6dFeDeB1487a",
+    "apiBase": "https://apiv2.jaspervault.io",
     "rpcUrl": "https://mainnet.base.org",
     "subgraphUrl": "https://subgraph.satsuma-prod.com/0981c2ab3685/garys-team/jaspervault-v2-base-uat/api",
     "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",

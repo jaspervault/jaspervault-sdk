@@ -10,6 +10,7 @@
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "",
     "aproEndpoint": "https://live-api-test.apro.com",
+    "apiBase": "https://apiv2.jaspervault.io",
     "rpcUrl": "https://testnet-rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs-test.jaspervault.io/subgraphs/jaspervault-bitlayer-test",
     "optionQuotesUrl": "https://quotecenterv2-uat-gcx2x.ondigitalocean.app/api/v1/public/signedPrice",

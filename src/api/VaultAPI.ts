@@ -104,7 +104,7 @@ export default class OptionTradingAPI {
             for (let i = 0; i < assetsArr.length; i++) {
                 asset_type.push(BigNumber.from(1));
             }
-            const vault1 = await this.initNewAccount();
+            const vault1 = await this.getAddress(this.jVaultConfig.EOA, 1);
             calldata_arr.push(...await this.initializeVault(vault1, 1, !await this.checkVaultModulesStatus(vault1)));
             const user_wallet = this.jVaultConfig.EOA;
             for (let i = 0; i < assetsArr.length; i++) {

@@ -136,6 +136,7 @@ export interface NetworkConfig {
   aproEndpoint: Address;
   aproAuthorization: string;
   optionQuotesUrl: string;
+  apiBase: string;
   rpcUrl: string;
   subgraphUrl: string;
   tokens: Token[];

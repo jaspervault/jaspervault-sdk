@@ -11,6 +11,7 @@
     "pythPriceFeedAddr": "",
     "aproEndpoint": "https://live-api.apro.com",
     "aproAuthorization": "e6a2c31d-0843-4e66-aa02-ec6ee9c06a34",
+    "apiBase": "https://apiv2.jaspervault.io",
     "rpcUrl": "https://rpc.bitlayer.org",
     "subgraphUrl": "https://subgraphs.jaspervault.io/subgraphs/jaspervault-bitlayer",
     "optionQuotesUrl": "https://quotecenterv2.jaspervault.io/api/v1/public/signedPrice",

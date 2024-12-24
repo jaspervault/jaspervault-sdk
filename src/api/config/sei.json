@@ -11,6 +11,7 @@
     "pythAddr": "0xe9d69CdD6Fe41e7B621B4A688C5D1a68cB5c8ADc",
     "usd": "0x0000000000000000000000000000000000000001",
     "positionTypeCount": 6,
+    "apiBase": "https://apiv2.jaspervault.io",
     "optionQuotesUrl": "https://quotes.jaspervault.io/api/public/signedPrice",
     "contractData": {
         "EntryPoint": "0x1a2536E1DD062466C20bdAFd5DF5d6e0e2F4FCd3",
