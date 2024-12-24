@@ -2500,7 +2500,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jaspervault/contracts-v2@npm:^2.6.4":
+"@jaspervault/contracts-v2@npm:2.6.4":
   version: 2.6.4
   resolution: "@jaspervault/contracts-v2@npm:2.6.4"
   dependencies:
@@ -2553,7 +2553,7 @@ __metadata:
     "@0xproject/utils": "npm:^2.0.2"
     "@account-abstraction/sdk": "npm:^0.6.0"
     "@babel/preset-env": "npm:^7.24.7"
-    "@jaspervault/contracts-v2": "npm:^2.6.4"
+    "@jaspervault/contracts-v2": "npm:2.6.4"
     "@pythnetwork/pyth-evm-js": "npm:^1.56.1"
     "@types/chai-as-promised": "npm:^7.1.3"
     "@types/copyfiles": "npm:^2"
