@@ -225,7 +225,7 @@ export default class OptionTradingAPI {
             }
             const premiumSign: IOptionModuleV2.PremiumOracleSignStruct = await this.fetchSignData(JVaultOrders[i]);
             JVaultOrders[i].premiumSign = premiumSign;
-            logger.info('premiumSign:', premiumSign);
+            logger.info(`premiumSign: ${JSON.stringify(premiumSign)}`);
             JVaultOrders[i].depositData = await this.getDepositData(JVaultOrders[i]);
         }
         const depositPremiumOP = await this.depositPremium(JVaultOrders[0].premiumVault, JVaultOrders);
@@ -244,8 +244,8 @@ export default class OptionTradingAPI {
             if (this.TransactionHandler instanceof JaspervaultTransactionHandler) {
                 if (Object.keys(txOpts).length == 0) {
                     txOpts = this.txOpts;
-                    logger.info('txOpts:', ethers.utils.formatUnits(txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(txOpts.maxPriorityFeePerGas, 'gwei'));
-                    logger.info('txOpts use default:', ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei'), ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei'));
+                    logger.info(`txOpts use default: ${ethers.utils.formatUnits(this.txOpts.maxFeePerGas, 'gwei')} -- ${ethers.utils.formatUnits(this.txOpts.maxPriorityFeePerGas, 'gwei')}`);
+                    logger.info(`txOpts: ${JSON.stringify(txOpts)}`);
                 }
             }
 
@@ -327,7 +327,7 @@ export default class OptionTradingAPI {
                 JVaultOrder.strikeAsset,
                 JVaultOrder.strikeAmount);
         }
-        logger.info('Earnings:', earnings);
+        logger.info(`earnings: ${earnings}`);
         calldata_arr.push({
             dest: this.jVaultConfig.data.contractData.OptionService,
             value: ethers.constants.Zero,
@@ -512,14 +512,21 @@ export default class OptionTradingAPI {
         };
         if (JVaultOrder.amount.eq(BigNumber.from(0)) == false) {
             const premium = BigNumber.from(JVaultOrder.premiumSign.premiumFee).mul(BigNumber.from(JVaultOrder.amount)).div(ethers.constants.WeiPerEther);
-            logger.info(`premium:${premium}`);
+            logger.info(`premium: ${premium.toString()}`);
             let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
-            if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
-                balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
-            }
-            else {
-                const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
-                balanceOfPremiumVault = await premium_asset.balanceOf(JVaultOrder.premiumVault);
+            if (JVaultOrder.nftWaiver) {
+                if (JVaultOrder.nftId.toString() in this.jVaultConfig.data.nftWaiver.JSBTIds && JVaultOrder.nftWaiver == this.jVaultConfig.data.nftWaiver.JSBT) {
+                    logger.info(`use nftWaiver: ${JVaultOrder.nftId.toString()} -- ${JVaultOrder.nftWaiver}`);
+                    balanceOfPremiumVault = premium;
+                }
+            } else {
+                if (JVaultOrder.premiumAsset == this.jVaultConfig.data.eth) {
+                    balanceOfPremiumVault = await this.jVaultConfig.ethersProvider.getBalance(JVaultOrder.premiumVault);
+                }
+                else {
+                    const premium_asset = new ERC20Wrapper(this.jVaultConfig.ethersSigner, JVaultOrder.premiumAsset);
+                    balanceOfPremiumVault = await premium_asset.balanceOf(JVaultOrder.premiumVault);
+                }
             }
             logger.info(`balanceOfPremiumVault:${balanceOfPremiumVault.toString()}`);
             if (balanceOfPremiumVault.lt(premium) == true) {
@@ -731,10 +738,10 @@ export default class OptionTradingAPI {
             liquidationToEOA: false,
             offerID: offerID,
         };
-        logger.info('optionOrder:', optionOrder);
+        logger.info(`optionOrder: ${JSON.stringify(optionOrder)}`);
 
         if (JVaultOrder.nftId != undefined) {
-            logger.info('nftId:', JVaultOrder.nftId);
+            logger.info(`nftId: ${JVaultOrder.nftId}`);
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
                 const setAboutToUseNftId_abi = [
                     {
@@ -804,7 +811,7 @@ export default class OptionTradingAPI {
                 }
                 const allowance = await premiumAsset_erc20wrapper.allowance(this.jVaultConfig.EOA, premiumVault);
                 if (allowance.lt(depositAmount)) {
-                    logger.info('approve:', depositAmount.toString());
+                    logger.info(`approve: ${depositAmount.toString()}`);
                     this.eventEmitter.emit('beforeApprove', allowance, depositAmount);
                     const tx = await premiumAsset_erc20wrapper.approve(premiumVault, depositAmount, this.txOpts);
                     await tx.wait(this.jVaultConfig.data.safeBlock);

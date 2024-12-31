@@ -58,20 +58,40 @@
                 "value": 1
             },
             {
-                "key": "reality_stone_btc_002",
+                "key": "reality_stone_btc_001",
                 "value": 2
             },
             {
-                "key": "reality_stone_btc_01",
+                "key": "reality_stone_btc_005",
                 "value": 3
             },
             {
-                "key": "power_stone_btc_002",
+                "key": "power_stone_btc_001",
                 "value": 4
             },
             {
-                "key": "power_stone_btc_01",
+                "key": "power_stone_btc_005",
                 "value": 5
+            },
+            {
+                "key": "reality_stone_btc_01",
+                "value": 6
+            },
+            {
+                "key": "power_stone_btc_01",
+                "value": 7
+            },
+            {
+                "key": "space_stone_btc_001",
+                "value": 8
+            },
+            {
+                "key": "space_stone_btc_005",
+                "value": 9
+            },
+            {
+                "key": "space_stone_btc_01",
+                "value": 10
             }
         ]
     },
