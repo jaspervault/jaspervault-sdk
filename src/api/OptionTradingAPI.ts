@@ -255,6 +255,7 @@ export default class OptionTradingAPI {
         }
         catch (error) {
             logger.error('Error Placing order:', error);
+            throw new Error(error);
         }
     }
 

@@ -49,6 +49,51 @@
         "maxFeePerGas": "0.0101",
         "maxPriorityFeePerGas": "0.001"
     },
+    "nftWaiver": {
+        "JSBT": "0x5dd366e109287375f78f5372fCA2fe5aBAfAd97B",
+        "JSBTIds": [
+            {
+                "key": "moonlight",
+                "value": 1
+            },
+            {
+                "key": "reality_stone_btc_001",
+                "value": 2
+            },
+            {
+                "key": "reality_stone_btc_005",
+                "value": 3
+            },
+            {
+                "key": "power_stone_btc_001",
+                "value": 4
+            },
+            {
+                "key": "power_stone_btc_005",
+                "value": 5
+            },
+            {
+                "key": "reality_stone_btc_01",
+                "value": 6
+            },
+            {
+                "key": "power_stone_btc_01",
+                "value": 7
+            },
+            {
+                "key": "space_stone_btc_001",
+                "value": 8
+            },
+            {
+                "key": "space_stone_btc_005",
+                "value": 9
+            },
+            {
+                "key": "space_stone_btc_01",
+                "value": 10
+            }
+        ]
+    },
     "tokens": [
         {
             "name": "eth",
