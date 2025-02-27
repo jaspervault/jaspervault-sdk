@@ -46,5 +46,13 @@
         "PUT": {
             "BTC": "0x5646A257c634760E12Da26bdB34ba74f7645107D"
         }
+    },
+    "bnb": {
+        "CALL": {
+            "BTCB": "0x2e5C249B269A2CED72960820B10eF29f4378a025"
+        },
+        "PUT": {
+            "BTCB": "0x2B85DaDf1fA7ceB2112aaE0b9Fd213738936028E"
+        }
     }
 }

@@ -672,7 +672,7 @@ export default class OptionTradingAPI {
             }
         }
         const feedIDsParam = priceIds.join(',');
-        const timestamp = Math.floor(Date.now() / 1000) - 1;
+        const timestamp = Math.floor(Date.now() / 1000);
 
         try {
             const response = await axios.get(`${this.jVaultConfig.data.aproEndpoint}/api/v1/reports/bulk`, {
@@ -683,6 +683,7 @@ export default class OptionTradingAPI {
                 headers: {
                     'Authorization': this.jVaultConfig.data.aproAuthorization,
                     'X-Authorization-Timestamp': Date.now(),
+                    'Content-Type': 'application/json',
                 },
             });
             if (response.data.reports.length == 0) {
