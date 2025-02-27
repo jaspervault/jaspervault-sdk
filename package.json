@@ -1,6 +1,6 @@
 {
     "name": "@jaspervault/jvault.js",
-    "version": "0.2.27",
+    "version": "0.2.29",
     "description": "A javascript library for interacting with the JasperVault Protocol",
     "keywords": [
         "JVault.js",

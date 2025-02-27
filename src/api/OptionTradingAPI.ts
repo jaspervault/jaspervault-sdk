@@ -672,13 +672,13 @@ export default class OptionTradingAPI {
             }
         }
         const feedIDsParam = priceIds.join(',');
-        const timestamp = Math.floor(Date.now() / 1000);
+
 
         try {
             const response = await axios.get(`${this.jVaultConfig.data.aproEndpoint}/api/v1/reports/bulk`, {
                 params: {
                     feedIDs: feedIDsParam,
-                    timestamp: timestamp,
+                    timestamp: 'latest',
                 },
                 headers: {
                     'Authorization': this.jVaultConfig.data.aproAuthorization,
@@ -690,7 +690,6 @@ export default class OptionTradingAPI {
                 throw new Error('Reports empty! Failed to fetch APRO price feed update data');
             }
             const priceFeedUpdateData = [];
-
             for (const i in response.data.reports) {
                 priceFeedUpdateData.push(response.data.reports[i].fullReport);
             }
