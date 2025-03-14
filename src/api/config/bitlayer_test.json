@@ -99,6 +99,18 @@
             {
                 "key": "space_stone_btc_01",
                 "value": 10
+            },
+            {
+                "key": "time_stone_btc_001",
+                "value": 11
+            },
+            {
+                "key": "time_stone_btc_005",
+                "value": 12
+            },
+            {
+                "key": "time_stone_btc_02",
+                "value": 13
             }
         ]
     },

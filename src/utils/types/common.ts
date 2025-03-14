@@ -88,6 +88,9 @@ export interface JVaultOrder {
     paymaster: Address;
     paymasterFee: BigNumber;
   };
+  timestamp?: number;
+  signature?: string;
+  unlockTimeSpan?: number;
 }
 export interface DepositData {
   vault: Address;

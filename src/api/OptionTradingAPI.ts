@@ -109,7 +109,26 @@ export default class OptionTradingAPI {
         };
         this.eventEmitter.emit('beforeFetchQuote', data);
         try {
-            const response = await axios.post(this.jVaultConfig.data.optionQuotesUrl, data);
+            let response;
+            if (JVaultOrder.timestamp && JVaultOrder.signature) {
+
+                const requestData = {
+                    ...data,
+                    unlock_time_span: JVaultOrder.unlockTimeSpan,
+                };
+
+                const optionQuotesUrl =  `${this.jVaultConfig.data.optionQuotesUrl}/nft/${JVaultOrder.timestamp}`;
+                response = await axios.post(optionQuotesUrl, requestData, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'signature': JVaultOrder.signature,
+                    },
+                });
+            } else {
+                // common order
+                response = await axios.post(this.jVaultConfig.data.optionQuotesUrl, data);
+            }
+
             if (response.status == 200) {
                 const signedData: SignedPrice = {
                     id: response.data.data.id,
