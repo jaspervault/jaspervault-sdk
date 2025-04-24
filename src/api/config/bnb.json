@@ -102,6 +102,54 @@
             {
                 "key": "time_stone_btc_02",
                 "value": 13
+            },
+            {
+                "key": "reality_stone_btc_001_2h",
+                "value": 32
+            },
+            {
+                "key": "reality_stone_btc_005_2h",
+                "value": 33
+            },
+            {
+                "key": "power_stone_btc_001_2h",
+                "value": 34
+            },
+            {
+                "key": "power_stone_btc_005_2h",
+                "value": 35
+            },
+            {
+                "key": "reality_stone_btc_01_2h",
+                "value": 36
+            },
+            {
+                "key": "power_stone_btc_01_2h",
+                "value": 37
+            },
+            {
+                "key": "space_stone_btc_001_2h",
+                "value": 38
+            },
+            {
+                "key": "space_stone_btc_005_2h",
+                "value": 39
+            },
+            {
+                "key": "space_stone_btc_01_2h",
+                "value": 40
+            },
+            {
+                "key": "time_stone_btc_001_2h",
+                "value": 41
+            },
+            {
+                "key": "time_stone_btc_005_2h",
+                "value": 42
+            },
+            {
+                "key": "time_stone_btc_02_2h",
+                "value": 43
             }
         ]
     },

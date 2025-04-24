@@ -117,7 +117,7 @@ export default class OptionTradingAPI {
                     unlock_time_span: JVaultOrder.unlockTimeSpan,
                 };
 
-                const optionQuotesUrl =  `${this.jVaultConfig.data.optionQuotesUrl}/nft/${JVaultOrder.timestamp}`;
+                const optionQuotesUrl = `${this.jVaultConfig.data.optionQuotesUrl}/nft/${JVaultOrder.timestamp}`;
                 response = await axios.post(optionQuotesUrl, requestData, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -251,7 +251,6 @@ export default class OptionTradingAPI {
         if (depositPremiumOP.length > 0) {
             calldata_arr.push(...depositPremiumOP);
         }
-
         for (let i = 0; i < JVaultOrders.length; i++) {
             const JVaultOrder = JVaultOrders[i];
             const newVaultResult = await this.checkAndInitializeVault(JVaultOrder.optionVault, JVaultOrder);
@@ -267,7 +266,6 @@ export default class OptionTradingAPI {
                     logger.info(`txOpts: ${JSON.stringify(txOpts)}`);
                 }
             }
-
             const tx = await this.TransactionHandler.sendTransaction(JVaultOrders[0].premiumVault, calldata_arr, txOpts);
             return tx;
 
@@ -535,7 +533,7 @@ export default class OptionTradingAPI {
             logger.info(`premium: ${premium.toString()}`);
             let balanceOfPremiumVault: BigNumber = ethers.constants.Zero;
             if (JVaultOrder.nftWaiver) {
-                if (JVaultOrder.nftId.toString() in this.jVaultConfig.data.nftWaiver.JSBTIds && JVaultOrder.nftWaiver == this.jVaultConfig.data.nftWaiver.JSBT) {
+                if (this.jVaultConfig.data.nftWaiver.JSBTIds.some(item => item.value.toString() === JVaultOrder.nftId.toString()) && JVaultOrder.nftWaiver == this.jVaultConfig.data.nftWaiver.JSBT) {
                     logger.info(`use nftWaiver: ${JVaultOrder.nftId.toString()} -- ${JVaultOrder.nftWaiver}`);
                     balanceOfPremiumVault = premium;
                 }
@@ -733,7 +731,7 @@ export default class OptionTradingAPI {
         let offerID = BigNumber.from(0);
         for (let i = 0; i < writer_config.length; i++) {
             for (let j = 0; j < writer_config[i].productTypes.length; j++) {
-                if (writer_config[i].underlyingAsset == JVaultOrder.underlyingAsset) {
+                if (writer_config[i].underlyingAsset.toLowerCase() == JVaultOrder.underlyingAsset.toLowerCase()) {
                     if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
                         productTypeIndex = BigNumber.from(j);
                         settingsIndex = BigNumber.from(i);
@@ -758,8 +756,6 @@ export default class OptionTradingAPI {
             liquidationToEOA: false,
             offerID: offerID,
         };
-        logger.info(`optionOrder: ${JSON.stringify(optionOrder)}`);
-
         if (JVaultOrder.nftId != undefined) {
             logger.info(`nftId: ${JVaultOrder.nftId}`);
             if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {

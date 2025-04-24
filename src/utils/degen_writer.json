@@ -41,10 +41,10 @@
     },
     "bitlayer_test": {
         "CALL": {
-            "BTC": "0xb067D4decA67E8AfdCB80b254c53a2643a77Bc13"
+            "BTC": "0x402Ec53134920Aaa0411b58c33b7C34f1973F541"
         },
         "PUT": {
-            "BTC": "0x5646A257c634760E12Da26bdB34ba74f7645107D"
+            "BTC": "0xE5c73B99558ad3252d633E1ee6425d3EC91dC27b"
         }
     },
     "bnb": {
