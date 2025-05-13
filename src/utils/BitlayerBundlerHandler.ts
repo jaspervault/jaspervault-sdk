@@ -178,25 +178,13 @@ class BitlayerBundlerHandler implements TransactionHandler {
         }
         userOp.maxFeePerGas = this.toHex(maxFeePerGas);
         userOp.maxPriorityFeePerGas = this.toHex(maxPriorityFeePerGas);
-        res = await axios.post(paymasterUrl,
-            {
-                id: 1,
-                jsonrpc: '2.0',
-                method: 'pm_supported_tokens',
-                params: [userOp, projectAPIKey, entryPoint],
-            }
 
-        );
-        if (!res || !res.data || !res.data.result) {
-            console.log('pm_supported_tokens fail', res.data);
-        }
-        const pm_token = res.data.result.tokens[0];
         res = await axios.post(paymasterUrl,
             {
                 id: 1,
                 jsonrpc: '2.0',
                 method: 'pm_sponsor_userop',
-                params: [userOp, projectAPIKey, entryPoint, { type: '0', token: pm_token.token }],
+                params: [userOp, projectAPIKey, entryPoint, { type: '0', token: '0x' }],
             }
 
         );
