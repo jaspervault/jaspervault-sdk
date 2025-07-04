@@ -2,12 +2,12 @@
     "arbitrum": {
         "CALL": {
             "ETH": "0x51c83c3FE5a64EDB1DF6649086B98640780c711c",
-            "WBTC": "0xEA0d5ED7B7F9c2E4a07c1683B6b321745f46c437",
+            "WBTC": "0x5ffff66C4BE400185eE9CF903a76e7845b6998d3",
             "DLCBTC": "0x20cC817Dc3a523AA6f599160269d87232a89ea9c"
         },
         "PUT": {
             "ETH": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254",
-            "WBTC": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254",
+            "WBTC": "0x5388504406adAB83be8dCc6FE6dF94B3F44EEeeD",
             "DLCBTC": "0xDC4DCCeb96F05A662F1b54f9D750404d7878f254"
         }
     },

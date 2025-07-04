@@ -36,6 +36,7 @@
         "OptionService": "0xdaC0bE32467348ea71654d2A5aAe7793d065191f",
         "OptionModule": "0xE632D208e2F1561414E4a8442f8e20614Faa6CE6",
         "OptionModuleV2": "0xEcb1233E463Aa6cf6Ac0970D5643935A929fFad9",
+        "OptionModuleV4": "0x65eC8711814A1b2B48F4fDdbf2C391c3d7e05764",
         "UniswapV2ExchangeAdapter": "0x1B44c8d71DFC49e42e224c6D4EB7FDe00498dd3f",
         "UniswapV3ExchangeAdapter": "0x94d0d676dDF1eFf0f234F5Dfe7371100acF2BC8C",
         "PythOracleAdapter": "0xe1099a130A41B7a45Bc0e107714f98b18Fded40B",

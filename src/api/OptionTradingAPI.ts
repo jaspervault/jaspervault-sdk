@@ -3,6 +3,7 @@ import { JVaultConfig, BundlerOP, SignedPrice, LiquidateType, OptionType, Addres
 import { JVaultOrder, OptionOrder, Bytes } from '../utils/types';
 import {
     OptionModuleV2Wrapper,
+    OptionModuleV4Wrapper,
     PriceOracleWrapper,
     OptionServiceWrapper,
     VaultManageModuleWrapper,
@@ -29,6 +30,7 @@ export default class OptionTradingAPI {
     public txOpts: TransactionOverrides;
     private jVaultConfig: JVaultConfig;
     private OptionModuleV2Wrapper: OptionModuleV2Wrapper;
+    private OptionModuleV4Wrapper: OptionModuleV4Wrapper;
     private PriceOracleWrapper: PriceOracleWrapper;
     private OptionServiceWrapper: OptionServiceWrapper;
     private VaultManageModuleWrapper: VaultManageModuleWrapper;
@@ -47,6 +49,7 @@ export default class OptionTradingAPI {
     ) {
         this.jVaultConfig = config;
         this.OptionModuleV2Wrapper = new OptionModuleV2Wrapper(config.ethersSigner, config.data.contractData.OptionModuleV2);
+        this.OptionModuleV4Wrapper = new OptionModuleV4Wrapper(config.ethersSigner, config.data.contractData.OptionModuleV4);
         this.PriceOracleWrapper = new PriceOracleWrapper(config.ethersSigner, config.data.contractData.PriceOracle);
         this.OptionServiceWrapper = new OptionServiceWrapper(config.ethersSigner, config.data.contractData.OptionService);
         this.VaultManageModuleWrapper = new VaultManageModuleWrapper(config.ethersSigner, config.data.contractData.VaultManageModule);
@@ -308,6 +311,7 @@ export default class OptionTradingAPI {
             contractData.VaultFactory,
             contractData.VaultManageModule,
             contractData.OptionModuleV2,
+            contractData.OptionModuleV4,
             contractData.IssuanceModule,
             contractData.PriceOracle,
             contractData.OptionService,
@@ -516,9 +520,70 @@ export default class OptionTradingAPI {
     /**
      *
      * @returns {Promise<any>} - A promise that resolves to the option writer settings.
+     * @deprecated Use getOptionWriterSettingsFromAPI instead which provides more flexibility
      */
     public async getOptionWriterSettings(): Promise<any> {
-        return optionWriterConfig;
+
+        return this.getOptionWriterSettingsFromAPI();
+    }
+
+    /**
+     * Get option writer settings from API
+     * @param {string} chain - Chain name, defaults to network in config
+     * @param {string} symbol - Token symbol, e.g. ETH, WBTC
+     * @returns {Promise<any>} - Returns option writer settings
+     */
+    public async getOptionWriterSettingsFromAPI(chain?: string, symbol?: string): Promise<any> {
+        try {
+            // If parameters not provided, use defaults
+            const chainName = chain || this.jVaultConfig.network;
+            // Convert chain name to uppercase for API
+            const upperChain = chainName.toUpperCase();
+
+            // If no symbol provided, use local config
+            if (!symbol) {
+                return optionWriterConfig;
+            }
+
+            // Build API URL
+            const apiUrl = `https://apiv2.jaspervault.io/orders/dte_vault_list?chain=${upperChain}&symbol=${symbol}`;
+
+            logger.info(`Fetching option writer settings from: ${apiUrl}`);
+            const response = await axios.get(apiUrl);
+
+            if (response.status === 200 && response.data.status === 0) {
+                // Convert API response to local config format
+                const result = {};
+                result[chainName] = {
+                    'CALL': {},
+                    'PUT': {},
+                };
+
+                // Extract valid records from API data
+                const validData = response.data.data.filter(item =>
+                    item.callSettingIndex !== '-1' && item.putSettingIndex !== '-1'
+                );
+
+                if (validData.length > 0) {
+                    // Use first record's addresses
+                    result[chainName]['CALL'][symbol] = validData[0].callAddress;
+                    result[chainName]['PUT'][symbol] = validData[0].putAddress;
+
+                    logger.info(`Successfully fetched option writer settings for ${symbol} on ${chainName}`);
+                    return result;
+                } else {
+                    logger.warn(`No valid option writer settings found for ${symbol} on ${chainName}, fallback to local config`);
+                    return optionWriterConfig;
+                }
+            } else {
+                logger.error(`Failed to fetch option writer settings: ${response.data.message}`);
+                return optionWriterConfig;
+            }
+        } catch (error) {
+            logger.error('Error fetching option writer settings:', error);
+            // Fall back to local config on error
+            return optionWriterConfig;
+        }
     }
 
     private async getDepositData(JVaultOrder: JVaultOrder): Promise<DepositData> {
@@ -724,12 +789,25 @@ export default class OptionTradingAPI {
     }
 
     private async submitOrder(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
+        const moduleVersion = JVaultOrder.moduleVersion || 'V2';
+
+        if (moduleVersion === 'V4') {
+            return this.submitOrderV4(JVaultOrder);
+        } else {
+            return this.submitOrderV2(JVaultOrder);
+        }
+    }
+
+    private async submitOrderV2(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
         const calldata_arr: BundlerOP[] = [];
         const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
         let productTypeIndex = BigNumber.from(0);
         let settingsIndex = BigNumber.from(0);
         let offerID = BigNumber.from(0);
         for (let i = 0; i < writer_config.length; i++) {
+            if (writer_config[i].orderType !== JVaultOrder.optionType) {
+                continue;
+            }
             for (let j = 0; j < writer_config[i].productTypes.length; j++) {
                 if (writer_config[i].underlyingAsset.toLowerCase() == JVaultOrder.underlyingAsset.toLowerCase()) {
                     if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
@@ -786,6 +864,75 @@ export default class OptionTradingAPI {
             dest: this.jVaultConfig.data.contractData.OptionModuleV2,
             value: ethers.constants.Zero,
             data: await this.OptionModuleV2Wrapper.SubmitManagedOrder(optionOrder, true),
+        });
+        return calldata_arr;
+    }
+
+    private async submitOrderV4(JVaultOrder: JVaultOrder): Promise<BundlerOP[]> {
+        const calldata_arr: BundlerOP[] = [];
+        const writer_config = await this.OptionModuleV2Wrapper.getManagedOptionsSettings(JVaultOrder.optionWriter);
+        let productTypeIndex = BigNumber.from(0);
+        let settingsIndex = BigNumber.from(0);
+        let offerID = BigNumber.from(0);
+        for (let i = 0; i < writer_config.length; i++) {
+            if (writer_config[i].orderType == JVaultOrder.optionType) {
+                for (let j = 0; j < writer_config[i].productTypes.length; j++) {
+                    if (writer_config[i].underlyingAsset.toLowerCase() == JVaultOrder.underlyingAsset.toLowerCase()) {
+                        if (BigNumber.from(JVaultOrder.secondsToExpiry).eq(writer_config[i].productTypes[j])) {
+                            productTypeIndex = BigNumber.from(j);
+                            settingsIndex = BigNumber.from(i);
+                            offerID = BigNumber.from(writer_config[i].offerID);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        const optionOrder: IOptionModuleV2.ManagedOrderStruct = {
+            holder: JVaultOrder.optionVault,
+            writer: JVaultOrder.optionWriter,
+            recipient: JVaultOrder.premiumVault,
+            quantity: BigNumber.from(JVaultOrder.amount),
+            productTypeIndex: productTypeIndex,
+            settingsIndex: settingsIndex,
+            //  oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
+            oracleIndex: BigNumber.from(0),
+            premiumSign: JVaultOrder.premiumSign,
+            nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
+            optionSourceType: ethers.constants.Zero,
+            liquidationToEOA: false,
+            offerID: offerID,
+        };
+        if (JVaultOrder.nftId != undefined) {
+            logger.info(`nftId: ${JVaultOrder.nftId}`);
+            if (this.jVaultConfig.data.nftWaiver.JSBT != ethers.constants.AddressZero) {
+                const setAboutToUseNftId_abi = [
+                    {
+                        'inputs': [
+                            {
+                                'internalType': 'uint256',
+                                'name': '_nftId',
+                                'type': 'uint256',
+                            },
+                        ],
+                        'name': 'setAboutToUseNftId',
+                        'outputs': [],
+                        'stateMutability': 'nonpayable',
+                        'type': 'function',
+                    },
+                ];
+                const iface = new ethers.utils.Interface(setAboutToUseNftId_abi);
+                calldata_arr.push({
+                    dest: this.jVaultConfig.data.nftWaiver.JSBT,
+                    value: ethers.constants.Zero,
+                    data: iface.encodeFunctionData('setAboutToUseNftId', [JVaultOrder.nftId]),
+                });
+            }
+        }
+        calldata_arr.push({
+            dest: this.jVaultConfig.data.contractData.OptionModuleV4,
+            value: ethers.constants.Zero,
+            data: await this.OptionModuleV4Wrapper.submitManagedOrderV4(optionOrder, true),
         });
         return calldata_arr;
     }

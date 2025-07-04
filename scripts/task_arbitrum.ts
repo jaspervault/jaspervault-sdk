@@ -1,11 +1,13 @@
 import { JVault } from '../src';
-import { JVaultConfig, OptionType, NetworkConfig } from '../src/utils/types/index';
+import { JVaultConfig, OptionType, NetworkConfig, JVaultOrder } from '../src/utils/types/index';
 import { ethers } from 'ethers';
 import { FeeData } from '@ethersproject/abstract-provider'
 import * as dotenv from 'dotenv';
 import ADDRESSES from "../src/utils/coreAssets.json";
 import config from '../src/api/config/arbitrum.json';
 import ParticalHandler from '../src/utils/ParticalHandler';
+import { particalConfig } from './config/partical_config';
+import logger from '../src/utils/j_logger';
 
 let config_holder: JVaultConfig;
 // let config_writer: JVaultConfig;
@@ -21,25 +23,40 @@ async function main() {
     let network_config: NetworkConfig = JVault.readNetworkConfig("arbitrum");
     let ethersProvider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
     let ethersSigner = new ethers.Wallet(process.env.PRIVATE_KEY_HOLDER, new ethers.providers.JsonRpcProvider(config.rpcUrl));
-    ParticalHandler;
+    let particalHandler: ParticalHandler = new ParticalHandler({
+        chainId: network_config.chainId,
+        ethersProvider: ethersProvider,
+        ethersSigner: ethersSigner,
+        minConfirmationCount: 2,
+        data: {
+            projectUuid: particalConfig.projectUuid,
+            projectKey: particalConfig.projectKey,
+            paymasterUrl: particalConfig.paymasterUrl,
+            bundlerUrl: particalConfig.bundlerUrl,
+            contractData: {
+                EntryPoint: network_config.contractData.EntryPoint,
+                VaultFactory: network_config.contractData.VaultFactory
+            }
+        }
+    });
+    particalHandler;
+    feeData = await ethersProvider.getFeeData();
+    if (!feeData.lastBaseFeePerGas) {
+        throw new Error("lastBaseFeePerGas required");
+    }
+    let maxFeePerGas = feeData.lastBaseFeePerGas.add(ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"))
 
     config_holder = {
         ethersProvider: ethersProvider,
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        // transactionHandler: new ParticalHandler({
-        //     chainId: network_config.chainId,
-        //     bundleUrl: network_config.bundleUrl,
-        //     ethersProvider: ethersProvider,
-        //     ethersSigner: ethersSigner,
-        //     data: {
-        //         contractData: {
-        //             EntryPoint: network_config.contractData.EntryPoint,
-        //             VaultFactory: network_config.contractData.VaultFactory
-        //         }
-        //     }
-        // })
+        transactionHandler: particalHandler,
+        gasSettings: {
+            maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
+            maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),
+
+        }
     };
 
     jVault_holder = new JVault(config_holder);
@@ -56,30 +73,33 @@ async function quickStart() {
     let vaults_1 = await checkVault1isExist();
     console.log(`vaults_1: ${vaults_1}`);
     console.log(`Starting place order`);
+    // let lpvault_setting = await jVault_holder.VaultAPI.getOptionWriterSettings("0x8126eC6d7805df102724afe22A38376Dc42F7902");
+    // console.log(lpvault_setting);
 
-
+    // let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let txs: JVaultOrder[] = [];
+    txs.push({
+        amount: ethers.utils.parseEther('0.01'),
+        underlyingAsset: ADDRESSES.arbitrum.WBTC,
+        optionType: OptionType.CALL,
+        premiumAsset: ADDRESSES.arbitrum.WBTC,
+        optionVault: ethers.constants.AddressZero,
+        // optionWriter: writer_config.arbitrum.CALL.WBTC,
+        optionWriter: "0x8126eC6d7805df102724afe22A38376Dc42F7902",
+        premiumVault: vaults_1,
+        chainId: config.chainId,
+        secondsToExpiry: 3600 * 0.5,
+        moduleVersion: 'V4'
+    });
     try {
-        let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettings();
-
-        let tx = await jVault_holder.OptionTradingAPI.createOrder({
-            amount: ethers.utils.parseEther('100'),
-            underlyingAsset: ADDRESSES.arbitrum.ARB,
-            optionType: OptionType.CALL,
-            premiumAsset: ADDRESSES.arbitrum.USDT,
-            optionVault: ethers.constants.AddressZero,
-            optionWriter: writer_config.arbitrum.CALL.ARB,
-            premiumVault: vaults_1,
-            chainId: config.chainId,
-            secondsToExpiry: 3600 * 2
-        }, {
-            maxFeePerGas: feeData.maxFeePerGas,
-            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei')
+        let tx = await jVault_holder.OptionTradingAPI.createDegenBatchOrders(txs, {
+            maxFeePerGas: feeData.lastBaseFeePerGas?.add(ethers.utils.parseUnits('0.01', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.001', 'gwei'),
+            // gasLimit: 5000000
         });
         if (tx) {
-            console.log(`order TX: ${tx.hash}`);
-            await tx.wait(1);
-            let order = await jVault_holder.OptionTradingAPI.getOrderByHash(tx.hash);
-            console.log(order);
+            let order = await jVault_holder.OptionTradingAPI.getOrderByHash(tx);
+            logger.info(order);
         }
     }
     catch (error) {
@@ -101,9 +121,10 @@ async function checkVault1isExist() {
     return vault1_addr;
 }
 async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
+    return
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettings();
+    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
 
 

@@ -13,7 +13,7 @@ let config_holder: JVaultConfig;
 let jVault_holder: JVault;
 dotenv.config();
 let feeData: FeeData;
-let network_name = "bitlayer_test";
+let network_name = "base_uat";
 let network_config: NetworkConfig = JVault.readNetworkConfig(network_name);
 let maxFeePerGas
 
@@ -63,22 +63,18 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        transactionHandler: particalHandler,
+        transactionHandler: coinbaseHandler,
         gasSettings: {
             maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
             maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),
 
         }
     };
-
-
-
     jVault_holder = new JVault(config_holder);
 
 
-    let tx = await depositERC20(ADDRESSES.bitlayer_test.USDT, "1");
+    let tx = await depositERC20(ADDRESSES.base.USDC, "1");
     console.log('deposit tx:', tx);
-    return;
     tx = await withdrawERC20(ADDRESSES.base.USDC, "1");
     console.log('withdraw tx:', tx);
     tx = await depositETH("0.001");

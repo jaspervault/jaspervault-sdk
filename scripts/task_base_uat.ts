@@ -8,56 +8,14 @@ import ParticalHandler from '../src/utils/ParticalHandler';
 import CoinbaseHandler from '../src/utils/CoinbaseHandler';
 import { particalConfig } from './config/partical_config';
 import { coinbaseConfig } from './config/coinbase_config';
-
-// Task configuration - you can simply switch tasks to execute here
-const TASK_CONFIG = {
-    enableQuery: true,          // Query seller configuration
-    enableBatchOrders: false,   // Batch orders
-    enableCallTest: false,      // CALL option test
-    enablePutTest: false,       // PUT option test
-    enableEventListeners: false // Event listeners
-};
-
 let config_holder: JVaultConfig;
 // let config_writer: JVaultConfig;
 let jVault_holder: JVault;
 dotenv.config();
 let feeData: FeeData;
-let network_config: NetworkConfig = JVault.readNetworkConfig("base");
-
-async function queryWriterSettings() {
-    try {
-        console.log('Querying writer settings...');
-
-        // Specify the vault address to query
-        const vault_addr = '0x5cdf70b831a84b11fc480528116248ba7f91cc62';
-        console.log(`Querying vault address: ${vault_addr}`);
-
-        try {
-            // Query contract configuration using vault address
-            let vaultWriterConfig = await jVault_holder.VaultAPI.getOptionWriterSettings(vault_addr);
-
-            if (vaultWriterConfig && vaultWriterConfig.length > 0) {
-                console.log('\n=== Writer Configuration Details ===');
-                console.log(`Found ${vaultWriterConfig.length} configuration items\n`);
-
-                const formattedSettings = formatManagedOptionsSettings(vaultWriterConfig);
-                formattedSettings.forEach(setting => {
-                    console.log(JSON.stringify(setting, null, 2));
-                    console.log('─'.repeat(80));
-                });
-            } else {
-                console.log('No writer configuration found for this vault');
-            }
-        } catch (error: any) {
-            console.log(`Failed to query vault ${vault_addr} configuration:`, error.message);
-        }
+let network_config: NetworkConfig = JVault.readNetworkConfig("base_uat");
 
 
-    } catch (error: any) {
-        console.error('Failed to query writer configuration:', error);
-    }
-}
 
 async function main() {
     if (!process.env.PRIVATE_KEY_HOLDER) {
@@ -98,103 +56,34 @@ async function main() {
     });
     particalHandler;
     coinbaseHandler;
-    let maxFeePerGas = feeData.lastBaseFeePerGas.mul(120).div(100).add(ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"))
+    let maxFeePerGas = feeData.lastBaseFeePerGas.add(ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"))
 
     config_holder = {
         ethersProvider: ethersProvider,
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        //  transactionHandler: coinbaseHandler,
+        // transactionHandler: coinbaseHandler,
         gasSettings: {
             maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
             maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),
         }
-    }; console.log(config_holder.gasSettings)
+    };
+
     jVault_holder = new JVault(config_holder);
-
-    // Option 1: Use command line parameters for control (recommended)
-    const task = process.argv[2];
-
-    if (task) {
-        // Select task to execute based on command line parameters
-        switch (task) {
-            case 'query':
-                console.log('🔍 Executing query task...');
-                await queryWriterSettings();
-                break;
-            case 'batch':
-                console.log('📦 Executing batch orders task...');
-                await sendDegenBatchOrders();
-                break;
-            case 'call':
-                console.log('📞 Executing CALL option test...');
-                await optionHolder_test(OptionType.CALL);
-                break;
-            case 'put':
-                console.log('📝 Executing PUT option test...');
-                await optionHolder_test(OptionType.PUT);
-                break;
-            case 'all':
-                console.log('🚀 Executing all tasks...');
-                await executeAllTasks();
-                break;
-            default:
-                console.log('❌ Unknown task. Available tasks:');
-                console.log('  - query: Query writer settings');
-                console.log('  - batch: Send degen batch orders');
-                console.log('  - call: Test CALL options');
-                console.log('  - put: Test PUT options');
-                console.log('  - all: Execute all tasks');
-                console.log('');
-                console.log('Usage examples:');
-                console.log('  npx ts-node scripts/task_base.ts query');
-                console.log('  npx ts-node scripts/task_base.ts batch');
-                console.log('  npx ts-node scripts/task_base.ts all');
-                break;
-        }
-    } else {
-        // Option 2: Use configuration object for control (alternative)
-        console.log('🔧 Using TASK_CONFIG to control execution...');
-
-        if (TASK_CONFIG.enableQuery) {
-            console.log('🔍 Executing query task...');
-            await queryWriterSettings();
-        }
-
-        if (TASK_CONFIG.enableEventListeners) {
-            const eventEmitter = jVault_holder.OptionTradingAPI.getEventEmitter();
-            eventEmitter.on('beforeApprove', (data) => {
-                console.log("beforeApprove", data);
-            });
-        }
-
-        if (TASK_CONFIG.enableBatchOrders) {
-            console.log('📦 Executing batch orders task...');
-            await sendDegenBatchOrders();
-        }
-
-        if (TASK_CONFIG.enableCallTest) {
-            console.log('📞 Executing CALL option test...');
-            await optionHolder_test(OptionType.CALL);
-        }
-
-        if (TASK_CONFIG.enablePutTest) {
-            console.log('📝 Executing PUT option test...');
-            await optionHolder_test(OptionType.PUT);
-        }
-    }
-}
-
-async function executeAllTasks() {
     const eventEmitter = jVault_holder.OptionTradingAPI.getEventEmitter();
+
     eventEmitter.on('beforeApprove', (data) => {
         console.log("beforeApprove", data);
     });
-    await queryWriterSettings();
+    // eventEmitter.on('afterSubmitToBundler', (data) => {
+    //     //console.log("afterSubmitToBundler", data);
+    // });
+
     await sendDegenBatchOrders();
+    return
     await optionHolder_test(OptionType.CALL);
-    await optionHolder_test(OptionType.PUT);
+    //await optionHolder_test(OptionType.PUT);
 }
 async function sendDegenBatchOrders() {
     if (!config_holder.ethersSigner) {
@@ -215,37 +104,34 @@ async function sendDegenBatchOrders() {
     console.log("feeData:", feeData.lastBaseFeePerGas?.toString());
     let vaults_1 = await jVault_holder.VaultAPI.initNewAccount();
     console.log(`vaults_0 ${vaults_0}`, ` vaults_1: ${vaults_1}`);
-
-
-
     let txs: JVaultOrder[] = [];
     txs.push({
-        amount: ethers.utils.parseEther('0.001'),
+        amount: ethers.utils.parseEther('0.0001'),
         underlyingAsset: ADDRESSES.base.CBBTC,
         optionType: OptionType.CALL,
         premiumAsset: ADDRESSES.base.USDC,
         optionVault: ethers.constants.AddressZero,
-        optionWriter: writer_config.base.CALL.CBBTC,
+        optionWriter: writer_config.base_uat.CALL.CBBTC,
         premiumVault: vaults_1,
         chainId: network_config.chainId,
-        secondsToExpiry: 3600 * 0.5
+        secondsToExpiry: 3600 * 2
     });
-    txs.push({
-        amount: ethers.utils.parseEther('0.001'),
-        underlyingAsset: ADDRESSES.base.CBBTC,
-        optionType: OptionType.PUT,
-        premiumAsset: ADDRESSES.base.USDC,
-        optionVault: ethers.constants.AddressZero,
-        optionWriter: writer_config.base.PUT.CBBTC,
-        premiumVault: vaults_1,
-        chainId: network_config.chainId,
-        secondsToExpiry: 3600 * 0.5
-    });
+    // txs.push({
+    //     amount: ethers.utils.parseEther('0.005'),
+    //     underlyingAsset: ADDRESSES.base.ETH,
+    //     optionType: OptionType.PUT,
+    //     premiumAsset: ADDRESSES.base.USDC,
+    //     optionVault: ethers.constants.AddressZero,
+    //     optionWriter: writer_config.base_uat.PUT.ETH,
+    //     premiumVault: vaults_1,
+    //     chainId: network_config.chainId,
+    //     secondsToExpiry: 3600 * 2
+    // });
     try {
         let tx = await jVault_holder.OptionTradingAPI.createDegenBatchOrders(txs, {
-            // maxFeePerGas: feeData.lastBaseFeePerGas?.mul(150).div(100)?.add(ethers.utils.parseUnits('0.01', 'gwei')),
-            // maxPriorityFeePerGas: ethers.utils.parseUnits('0.01', 'gwei'),
-            //gasLimit: 2000000
+            maxFeePerGas: feeData.lastBaseFeePerGas?.mul(150).div(100)?.add(ethers.utils.parseUnits('0.01', 'gwei')),
+            maxPriorityFeePerGas: ethers.utils.parseUnits('0.01', 'gwei'),
+            gasLimit: 5000000
         });
         if (tx) {
             let order = await jVault_holder.OptionTradingAPI.getOrderByHash(tx);
@@ -293,7 +179,7 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     if (orderType == OptionType.CALL) {
         try {
             let tx = await jVault_holder.OptionTradingAPI.createDegenOrder({
-                amount: ethers.utils.parseEther('0.01'),
+                amount: ethers.utils.parseEther('0.0001'),
                 underlyingAsset: ADDRESSES.base.CBBTC,
                 optionType: OptionType.CALL,
                 premiumAsset: ADDRESSES.base.CBBTC,
@@ -305,7 +191,8 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
             }, {
                 // maxFeePerGas: feeData.lastBaseFeePerGas?.mul(150).div(100)?.add(ethers.utils.parseUnits('0.01', 'gwei')),
                 // maxPriorityFeePerGas: ethers.utils.parseUnits('0.01', 'gwei'),
-                //gasLimit: 2000000
+                gasLimit: 5000000
+
             });
             if (tx) {
                 // console.log(`order TX: ${tx.hash}`);
@@ -348,45 +235,6 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     }
 }
 
-function formatManagedOptionsSettings(settings: any[]) {
-    return settings.map((setting, index) => {
-        return {
-            [`Setting ${index + 1}`]: {
-                'Basic Info': {
-                    'isOpen': setting.isOpen,
-                    'orderType': setting.orderType === 0 ? 'CALL' : setting.orderType === 1 ? 'PUT' : `Unknown(${setting.orderType})`,
-                    'writer': setting.writer,
-                    'offerID': setting.offerID.toString()
-                },
-                'Asset Configuration': {
-                    'lockAsset': setting.lockAsset,
-                    'lockAssetType': setting.lockAssetType,
-                    'underlyingAsset': setting.underlyingAsset,
-                    'underlyingNftID': setting.underlyingNftID.toString(),
-                    'strikeAsset': setting.strikeAsset,
-                    'premiumAssets': setting.premiumAssets
-                },
-                'Amount Limits': {
-                    'maximum': setting.maximum.toString(),
-                    'maxUnderlyingAssetAmount': setting.maxUnderlyingAssetAmount.toString(),
-                    'minUnderlyingAssetAmount': setting.minUnderlyingAssetAmount.toString(),
-                    'minQuantity': setting.minQuantity.toString()
-                },
-                'Product & Rates': {
-                    'productTypes': setting.productTypes.map((pt: any) => pt.toString()),
-                    'premiumRates': setting.premiumRates.map((pr: any) => pr.toString()),
-                    'premiumFloorAMMs': setting.premiumFloorAMMs.map((pf: any) => pf.toString()),
-                    'premiumOracleType': setting.premiumOracleType
-                },
-                'Other Settings': {
-                    'liquidateMode': setting.liquidateMode
-                }
-            }
-        };
-    });
-}
-
-// ...existing code...
 main().catch(error => {
     console.error(error);
     // process.exitCode = 1;

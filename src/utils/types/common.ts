@@ -91,6 +91,7 @@ export interface JVaultOrder {
   timestamp?: number;
   signature?: string;
   unlockTimeSpan?: number;
+  moduleVersion?: 'V2' | 'V4';
 }
 export interface DepositData {
   vault: Address;
@@ -152,6 +153,7 @@ export interface NetworkConfig {
   contractData: {
     OptionModule: Address;
     OptionModuleV2: Address;
+    OptionModuleV4: Address;
     EntryPoint: Address;
     DiamondCutFacet: Address;
     DiamondLoupeFacet: Address;

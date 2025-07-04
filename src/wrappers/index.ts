@@ -4,6 +4,7 @@ import VaultFactoryWrapper from './VaultFactoryWrapper';
 import IssuanceModuleWrapper from './IssuanceModuleWrapper';
 import OptionModuleWrapper from './OptionModuleWrapper';
 import OptionModuleV2Wrapper from './OptionModuleV2Wrapper';
+import OptionModuleV4Wrapper from './OptionModuleV4Wrapper';
 import OptionServiceWrapper from './OptionServiceWrapper';
 import VaultManageModuleWrapper from './VaultManageModuleWrapper';
 import VaultWrapper from './VaultWrapper';
@@ -19,6 +20,7 @@ export {
     IssuanceModuleWrapper,
     OptionModuleWrapper,
     OptionModuleV2Wrapper,
+    OptionModuleV4Wrapper,
     OptionServiceWrapper,
     VaultManageModuleWrapper,
     PriceOracleWrapper,

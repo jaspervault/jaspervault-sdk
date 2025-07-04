@@ -23,6 +23,7 @@ import {
   VaultManageModule__factory,
   OptionModule__factory,
   OptionModuleV2__factory,
+  OptionModuleV4__factory,
   IssuanceModule__factory
 } from '@jaspervault/contracts-v2/dist/typechain/factories/contracts/modules/';
 
@@ -78,6 +79,12 @@ export default class ContractWrapper {
     optionModuleV2Address: Address
   ): OptionModule {
     return OptionModuleV2__factory.connect(optionModuleV2Address, this.signer);
+  }
+
+  public getOptionModuleV4(
+    optionModuleV4Address: Address
+  ) {
+    return OptionModuleV4__factory.connect(optionModuleV4Address, this.signer);
   }
 
   public getIssuanceModule(
