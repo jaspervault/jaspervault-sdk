@@ -51,7 +51,7 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        transactionHandler: particalHandler,
+        //transactionHandler: particalHandler,
         gasSettings: {
             maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
             maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),

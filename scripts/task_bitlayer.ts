@@ -147,7 +147,7 @@ async function sendDegenBatchOrders() {
     }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     logger.info('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    //let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
     logger.info(`vaults.length: ${vaults.length}`);
     let vaults_0 = await jVault_holder.VaultAPI.getAddress(signer_Holder, 1);
@@ -160,12 +160,13 @@ async function sendDegenBatchOrders() {
     let txs: JVaultOrder[] = [];
     BigNumber;
     txs.push({
-        amount: ethers.utils.parseEther('0.01'),
+        amount: ethers.utils.parseEther('0.00001'),
         underlyingAsset: ADDRESSES.bitlayer.BTC,
         optionType: OptionType.CALL,
         premiumAsset: ADDRESSES.bitlayer.BTC,
         optionVault: ethers.constants.AddressZero,
-        optionWriter: writer_config.bitlayer.CALL.BTC,
+        //  optionWriter: writer_config.bitlayer.CALL.BTC,
+        optionWriter: "0xebda884558f79242765b6a3bbb3bce6539528ff8",
         premiumVault: vaults_1,
         chainId: network_config.chainId,
         secondsToExpiry: 3600 * 0.5,

@@ -9,7 +9,6 @@
     "weth": "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1",
     "quoteAsset": "USDT",
     "pythPriceFeedAddr": "",
-    "aproEndpoint": "https://live-api.apro.com",
     "aproAuthorization": "e6a2c31d-0843-4e66-aa02-ec6ee9c06a34",
     "apiBase": "https://apiv2.jaspervault.io",
     "rpcUrl": "https://rpc.bitlayer.org",
