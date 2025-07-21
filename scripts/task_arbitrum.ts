@@ -1,5 +1,6 @@
 import { JVault } from '../src';
 import { JVaultConfig, OptionType, NetworkConfig, JVaultOrder } from '../src/utils/types/index';
+import { transformWriterSettings } from '../src/utils';
 import { ethers } from 'ethers';
 import { FeeData } from '@ethersproject/abstract-provider'
 import * as dotenv from 'dotenv';
@@ -22,6 +23,9 @@ let jVault_holder;
 async function main() {
     let network_config: NetworkConfig = JVault.readNetworkConfig("arbitrum");
     let ethersProvider = new ethers.providers.JsonRpcProvider(config.rpcUrl);
+    if (!process.env.PRIVATE_KEY_HOLDER) {
+        throw new Error("PRIVATE_KEY_HOLDER environment variable is not set");
+    }
     let ethersSigner = new ethers.Wallet(process.env.PRIVATE_KEY_HOLDER, new ethers.providers.JsonRpcProvider(config.rpcUrl));
     let particalHandler: ParticalHandler = new ParticalHandler({
         chainId: network_config.chainId,
@@ -51,7 +55,7 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        //transactionHandler: particalHandler,
+        transactionHandler: particalHandler,
         gasSettings: {
             maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
             maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),
@@ -68,6 +72,9 @@ async function main() {
 }
 
 async function quickStart() {
+    if (!config_holder.ethersSigner) {
+        throw new Error("config_holder.ethersSigner is not initialized.");
+    }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
     let vaults_1 = await checkVault1isExist();
@@ -76,7 +83,8 @@ async function quickStart() {
     // let lpvault_setting = await jVault_holder.VaultAPI.getOptionWriterSettings("0x8126eC6d7805df102724afe22A38376Dc42F7902");
     // console.log(lpvault_setting);
 
-    // let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('arbitrum');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'arbitrum');
     let txs: JVaultOrder[] = [];
     txs.push({
         amount: ethers.utils.parseEther('0.01'),
@@ -84,8 +92,7 @@ async function quickStart() {
         optionType: OptionType.CALL,
         premiumAsset: ADDRESSES.arbitrum.WBTC,
         optionVault: ethers.constants.AddressZero,
-        // optionWriter: writer_config.arbitrum.CALL.WBTC,
-        optionWriter: "0x8126eC6d7805df102724afe22A38376Dc42F7902",
+        optionWriter: writer_config.arbitrum.CALL.WBTC,
         premiumVault: vaults_1,
         chainId: config.chainId,
         secondsToExpiry: 3600 * 0.5,
@@ -109,6 +116,9 @@ async function quickStart() {
 }
 
 async function checkVault1isExist() {
+    if (!config_holder.ethersProvider || !config_holder.EOA) {
+        throw new Error("config_holder.ethersProvider or EOA is not initialized.");
+    }
     let vault1_addr = await jVault_holder.VaultAPI.getAddress(config_holder.EOA, 1);
     let code = await config_holder.ethersProvider.getCode(vault1_addr);
     if (code == '0x') {
@@ -122,9 +132,13 @@ async function checkVault1isExist() {
 }
 async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     return
+    if (!config_holder.ethersSigner) {
+        throw new Error("config_holder.ethersSigner is not initialized.");
+    }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('arbitrum');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'arbitrum');
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
 
 
@@ -164,7 +178,9 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
 
     }
     else {
-
+        if (!config_holder.data || !config_holder.data.eth) {
+            throw new Error("config_holder.data or config_holder.data.eth is not initialized.");
+        }
         try {
             let tx = await jVault_holder.OptionTradingAPI.createOrder({
                 amount: ethers.utils.parseEther('0.0001'),

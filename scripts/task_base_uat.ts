@@ -1,6 +1,7 @@
 import { JVault } from '../src';
 import { JVaultConfig, OptionType, NetworkConfig, JVaultOrder } from '../src/utils/types/index';
-import { ethers } from 'ethers';
+import { transformWriterSettings } from '../src/utils';
+import { ethers, BigNumber } from 'ethers';
 import { FeeData } from '@ethersproject/abstract-provider'
 import * as dotenv from 'dotenv';
 import ADDRESSES from "../src/utils/coreAssets.json";
@@ -94,7 +95,8 @@ async function sendDegenBatchOrders() {
     }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('base_uat');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'base_uat');
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
     console.log(`vaults.length: ${vaults.length}`);
     let vaults_0 = await jVault_holder.VaultAPI.getAddress(signer_Holder, 1);
@@ -152,7 +154,8 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('base_uat');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'base_uat');
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
     console.log(`vaults.length: ${vaults.length}`);
     let vaults_0 = await jVault_holder.VaultAPI.getAddress(signer_Holder, 1);

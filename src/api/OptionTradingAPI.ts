@@ -17,7 +17,6 @@ import { BigNumber, ethers } from 'ethers';
 import axios from 'axios';
 import { EvmPriceServiceConnection } from '@pythnetwork/pyth-evm-js';
 import { TransactionOverrides } from '@jaspervault/contracts-v2/dist/typechain/';
-import optionWriterConfig from '../utils/degen_writer.json';
 import ADDRESSES from '../utils/coreAssets.json';
 import { EventEmitter } from 'events';
 import logger from '../utils/j_logger';
@@ -523,66 +522,102 @@ export default class OptionTradingAPI {
      * @deprecated Use getOptionWriterSettingsFromAPI instead which provides more flexibility
      */
     public async getOptionWriterSettings(): Promise<any> {
-
-        return this.getOptionWriterSettingsFromAPI();
+        // Fallback to local config is removed. Caller must handle errors.
+        return this.getOptionWriterSettingsFromAPI(this.jVaultConfig.network);
     }
 
     /**
      * Get option writer settings from API
-     * @param {string} chain - Chain name, defaults to network in config
-     * @param {string} symbol - Token symbol, e.g. ETH, WBTC
-     * @returns {Promise<any>} - Returns option writer settings
+     * @param {string} chain - Chain name. This parameter is required.
+     * @param {string} symbol - Optional. Token symbol, e.g. ETH, WBTC.
+     * @param {number} expiryInHour - Optional. The expiry in hours to select a specific vault.
+     * @returns {Promise<any>} - Returns an array of option writer settings.
      */
-    public async getOptionWriterSettingsFromAPI(chain?: string, symbol?: string): Promise<any> {
+    public async getOptionWriterSettingsFromAPI(chain: string, symbol?: string, expiryInHour?: number): Promise<any> {
+        if (!chain) {
+            throw new Error('Chain parameter is required.');
+        }
+        const upperChain = chain.toUpperCase();
+
         try {
-            // If parameters not provided, use defaults
-            const chainName = chain || this.jVaultConfig.network;
-            // Convert chain name to uppercase for API
-            const upperChain = chainName.toUpperCase();
+            // Step 1: Fetch the list of available assets (symbols)
+            const configApiUrl = `https://apiv2.jaspervault.io/orders/option/degen/config/list?chain=${upperChain}`;
+            logger.info(`Fetching available symbols from: ${configApiUrl}`);
+            const configResponse = await axios.get(configApiUrl);
 
-            // If no symbol provided, use local config
-            if (!symbol) {
-                return optionWriterConfig;
+            if (configResponse.status !== 200 || configResponse.data.status !== 0 || !Array.isArray(configResponse.data.data)) {
+                throw new Error(`Failed to fetch asset configuration for chain ${chain}.`);
             }
 
-            // Build API URL
-            const apiUrl = `https://apiv2.jaspervault.io/orders/dte_vault_list?chain=${upperChain}&symbol=${symbol}`;
+            let symbols = configResponse.data.data.map(asset => asset.bidAsset);
 
-            logger.info(`Fetching option writer settings from: ${apiUrl}`);
-            const response = await axios.get(apiUrl);
-
-            if (response.status === 200 && response.data.status === 0) {
-                // Convert API response to local config format
-                const result = {};
-                result[chainName] = {
-                    'CALL': {},
-                    'PUT': {},
-                };
-
-                // Extract valid records from API data
-                const validData = response.data.data.filter(item =>
-                    item.callSettingIndex !== '-1' && item.putSettingIndex !== '-1'
-                );
-
-                if (validData.length > 0) {
-                    // Use first record's addresses
-                    result[chainName]['CALL'][symbol] = validData[0].callAddress;
-                    result[chainName]['PUT'][symbol] = validData[0].putAddress;
-
-                    logger.info(`Successfully fetched option writer settings for ${symbol} on ${chainName}`);
-                    return result;
+            // If a specific symbol is requested, filter the list
+            if (symbol) {
+                if (symbols.includes(symbol)) {
+                    symbols = [symbol];
                 } else {
-                    logger.warn(`No valid option writer settings found for ${symbol} on ${chainName}, fallback to local config`);
-                    return optionWriterConfig;
+                    throw new Error(`The requested symbol '${symbol}' is not available on chain '${chain}'.`);
                 }
-            } else {
-                logger.error(`Failed to fetch option writer settings: ${response.data.message}`);
-                return optionWriterConfig;
             }
+
+            if (symbols.length === 0) {
+                logger.warn(`No symbols found for chain '${chain}'.`);
+                return [];
+            }
+
+            // Step 2: Concurrently fetch vault details for each symbol
+            logger.info(`Fetching vault addresses for symbols: [${symbols.join(', ')}] on chain ${chain}`);
+
+            const vaultDetailPromises = symbols.map(s => {
+                const vaultApiUrl = `https://apiv2.jaspervault.io/orders/dte_vault_list?chain=${upperChain}&symbol=${s}`;
+                return axios.get(vaultApiUrl);
+            });
+
+            const vaultDetailResponses = await Promise.all(vaultDetailPromises);
+
+            // Step 3: Select the correct vault and combine results
+            const finalSettings = [];
+            for (const response of vaultDetailResponses) {
+                if (response.status === 200 && response.data.status === 0 && Array.isArray(response.data.data) && response.data.data.length > 0) {
+
+                    const vaultsForSymbol = response.data.data;
+                    let selectedVault: any = undefined;
+
+                    // If expiryInHour is provided, try to find a match
+                    if (expiryInHour !== undefined) {
+                        selectedVault = vaultsForSymbol.find(vault => vault.expiryInHour == expiryInHour);
+                        if (selectedVault) {
+                            logger.info(`Found matching vault for symbol ${vaultsForSymbol[0].optionSymbol} with expiryInHour: ${expiryInHour}`);
+                        }
+                    }
+
+                    // If no match is found or expiryInHour was not provided, use the first one
+                    if (!selectedVault) {
+                        selectedVault = vaultsForSymbol[0];
+                        if (expiryInHour !== undefined) {
+                            logger.warn(`No vault found for expiryInHour ${expiryInHour} for symbol ${vaultsForSymbol[0].optionSymbol}. Falling back to the first available vault.`);
+                        }
+                    }
+
+                    // Create a new object that matches the expected structure for `transformWriterSettings`.
+                    finalSettings.push({
+                        symbol: selectedVault.optionSymbol,
+                        callAddress: selectedVault.callAddress,
+                        putAddress: selectedVault.putAddress,
+                    });
+
+                } else {
+                    logger.warn(`Failed to fetch or empty vault details for a symbol. Status: ${response.status}, Message: ${response.data.message || 'No data available'}`);
+                }
+            }
+
+            logger.info(`Successfully processed settings for ${finalSettings.length} symbols on chain ${chain}`);
+            return finalSettings;
+
         } catch (error) {
-            logger.error('Error fetching option writer settings:', error);
-            // Fall back to local config on error
-            return optionWriterConfig;
+            const errorMessage = `Error in getOptionWriterSettingsFromAPI: ${error.message}`;
+            logger.error(errorMessage);
+            throw new Error(errorMessage);
         }
     }
 
@@ -826,8 +861,8 @@ export default class OptionTradingAPI {
             quantity: BigNumber.from(JVaultOrder.amount),
             productTypeIndex: productTypeIndex,
             settingsIndex: settingsIndex,
-            oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
-            // oracleIndex: BigNumber.from(0),
+            //  oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
+            oracleIndex: BigNumber.from(0),
             premiumSign: JVaultOrder.premiumSign,
             nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
             optionSourceType: ethers.constants.Zero,
@@ -895,8 +930,8 @@ export default class OptionTradingAPI {
             quantity: BigNumber.from(JVaultOrder.amount),
             productTypeIndex: productTypeIndex,
             settingsIndex: settingsIndex,
-            //  oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
-            oracleIndex: BigNumber.from(0),
+            oracleIndex: this.jVaultConfig.data.pythPriceFeedAddr == '' ? BigNumber.from(1) : BigNumber.from(0),
+
             premiumSign: JVaultOrder.premiumSign,
             nftFreeOption: JVaultOrder.nftWaiver ? JVaultOrder.nftWaiver : ethers.constants.AddressZero,
             optionSourceType: ethers.constants.Zero,
