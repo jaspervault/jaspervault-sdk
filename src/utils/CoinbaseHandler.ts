@@ -62,11 +62,9 @@ class CoinbaseHandler implements TransactionHandler {
         const func = [];
         const code = await this.settings.ethersProvider.getCode(vault);
 
-        let vaule_tx = ethers.constants.Zero;
         op_arr.forEach(element => {
             dest.push(element.dest);
             value.push(element.value);
-            vaule_tx = vaule_tx.add(element.value);
             func.push(element.data);
         });
         const vaultIndex = await this.VaultFactoryWrapper.getVaultToSalt(vault);
@@ -88,13 +86,13 @@ class CoinbaseHandler implements TransactionHandler {
 
         let maxFeePerGas = txOpts.maxFeePerGas;
         let maxPriorityFeePerGas = txOpts.maxPriorityFeePerGas;
-        let gasPriceMultiplier = 1.5;
+        let gasPriceMultiplier = 2;
         if (!maxFeePerGas || !maxPriorityFeePerGas) {
             const ethersFeeData: FeeData = await this.settings.ethersProvider.getFeeData();
             maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 100)).div(BigNumber.from('100'));
             if (ethersFeeData.lastBaseFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
                 console.log('lastBaseFeePerGas too low--->', ethers.utils.formatUnits(ethersFeeData.lastBaseFeePerGas, 'gwei'));
-                gasPriceMultiplier = 1.8;
+                gasPriceMultiplier = 2.5;
                 maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 100)).div(BigNumber.from('100'));
                 maxFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from((gasPriceMultiplier + 0.3) * 100)).div(BigNumber.from('100'));
                 if (maxFeePerGas.lt(ethers.utils.parseUnits('0.005', 'gwei'))) {
@@ -102,115 +100,97 @@ class CoinbaseHandler implements TransactionHandler {
                 }
             }
             else {
-                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(gasPriceMultiplier * 0.5 * 100)).div(BigNumber.from('100'));
+
+                maxPriorityFeePerGas = ethersFeeData.lastBaseFeePerGas.mul(BigNumber.from(20)).div(BigNumber.from('100'));
             }
         }
         console.log('maxFeePerGas', ethers.utils.formatUnits(maxFeePerGas, 'gwei'));
         console.log('maxPriorityFeePerGas', ethers.utils.formatUnits(maxPriorityFeePerGas, 'gwei'));
-        const unsignOp = {
-            sender: vault,
-            nonce: nonce,
-            initCode: initCode,
-            callData: calldata,
-            callGasLimit: 3500000,
-            verificationGasLimit: 500000,
-            maxFeePerGas: maxFeePerGas,
-            maxPriorityFeePerGas: maxPriorityFeePerGas,
-            paymasterAndData: '0x',
-            preVerificationGas: 500000,
-            signature: '0x8a1e1504ab48d24cc6cb0ed990d94330297d857b4fd90aba9c3fae0adb80d10c76f2cfd253627baca1630e797e94864c29637846e7d8f18728d1fb481a89f5791c',
-        };
-
         const entryPoint = this.settings.data.contractData.EntryPoint;
-        const paymasterUrl = this.settings.bundlerUrl;
-        const bundlerUrl = `${this.settings.bundlerUrl}`;
+        const bundlerUrl = this.settings.bundlerUrl;
         const userOp = {
-            'sender': unsignOp.sender,
-            'nonce': this.toHex(await unsignOp.nonce),
-            'initCode': unsignOp.initCode,
-            'callData': await unsignOp.callData,
-            'callGasLimit': this.toHex(unsignOp.callGasLimit),
-            'verificationGasLimit': this.toHex(unsignOp.verificationGasLimit),
-            'maxFeePerGas': this.toHex(unsignOp.maxFeePerGas),
-            'maxPriorityFeePerGas': this.toHex(unsignOp.maxPriorityFeePerGas),
-            'paymasterAndData': unsignOp.paymasterAndData,
-            'preVerificationGas': this.toHex(unsignOp.preVerificationGas),
-            'signature': unsignOp.signature,
+            'sender': vault,
+            'nonce': this.toHex(nonce),
+            'initCode': initCode,
+            'callData': await calldata,
+            'callGasLimit': '0x0',
+            'verificationGasLimit': '0x0',
+            'maxFeePerGas': this.toHex(maxFeePerGas),
+            'maxPriorityFeePerGas': this.toHex(maxPriorityFeePerGas),
+            'paymasterAndData': '0x',
+            'preVerificationGas': '0x0',
+            'signature': '0x8a1e1504ab48d24cc6cb0ed990d94330297d857b4fd90aba9c3fae0adb80d10c76f2cfd253627baca1630e797e94864c29637846e7d8f18728d1fb481a89f5791c',
         };
 
-        const estimateOp_options = {
-            'method': 'eth_estimateUserOperationGas',
-            'params': [{
-                'sender': await userOp.sender,
-                'nonce': await userOp.nonce,
-                'initCode': await userOp.initCode,
-                'callData': await userOp.callData,
-                'callGasLimit': await userOp.callGasLimit,
-                'verificationGasLimit': await userOp.verificationGasLimit,
-                'maxFeePerGas': userOp.maxFeePerGas,
-                'maxPriorityFeePerGas': userOp.maxPriorityFeePerGas,
-                'paymasterAndData': await userOp.paymasterAndData,
-                'preVerificationGas': await userOp.preVerificationGas,
-                'signature': await userOp.signature,
-            }, entryPoint],
-            'id': 1,
-            'jsonrpc': '2.0',
-        };
+        // Estimate gas before paymaster call
+        const estimateOp_options = this.createJsonRpcRequest('eth_estimateUserOperationGas', [userOp, entryPoint]);
         let res = await axios.post(bundlerUrl, estimateOp_options);
         if (res.data.error) {
             console.log('eth_estimateUserOperationGas error: ', res.data);
             return;
         }
-        console.log('estimate gas', res.data.result);
-        const preVerificationGas = parseInt((res.data.result.preVerificationGas * gasPriceMultiplier).toString());
-        userOp.preVerificationGas = this.toHex(preVerificationGas);
-        userOp.verificationGasLimit = this.toHex(res.data.result.verificationGasLimit);
-        userOp.callGasLimit = this.toHex(res.data.result.callGasLimit);
 
+        // Use estimated gas values directly
+        userOp.preVerificationGas = res.data.result.preVerificationGas;
+        userOp.verificationGasLimit = res.data.result.verificationGasLimit;
+        userOp.callGasLimit = res.data.result.callGasLimit;
 
-        res = await axios.post(paymasterUrl,
-            {
-                jsonrpc: '2.0',
-                id: 1,
-                method: 'pm_getPaymasterData',
-                params: [
-                    userOp,
-                    entryPoint,
-                    `0x${chainID.toString(16)}`,
-                    {},
-                ],
-            }
+        res = await axios.post(bundlerUrl,
+            this.createJsonRpcRequest('pm_getPaymasterStubData', [
+                userOp,
+                entryPoint,
+                `0x${chainID.toString(16)}`,
+                {},
+            ])
         );
         if (!res || !res.data || !res.data.result || !res.data.result.paymasterAndData) {
-            console.log(res.data, 'pm_getPaymasterData fail');
+            console.log(res.data, 'pm_getPaymasterStubData fail');
+            return;
+        }
+        userOp.paymasterAndData = res.data.result.paymasterAndData;
+
+
+        res = await axios.post(bundlerUrl,
+            this.createJsonRpcRequest('pm_sponsorUserOperation', [
+                userOp,
+                entryPoint,
+            ])
+        );
+        if (!res || !res.data || !res.data.result || !res.data.result.paymasterAndData) {
+            console.log(res.data, 'pm_sponsorUserOperation fail');
+            return;
         }
 
-        userOp.paymasterAndData = res.data.result.paymasterAndData;
+        const sponsorResult = res.data.result;
+        userOp.paymasterAndData = sponsorResult.paymasterAndData;
+
+        if (sponsorResult.preVerificationGas) {
+            userOp.preVerificationGas = this.toHex(sponsorResult.preVerificationGas);
+        }
+        if (sponsorResult.verificationGasLimit) {
+            userOp.verificationGasLimit = this.toHex(sponsorResult.verificationGasLimit);
+        }
+        if (sponsorResult.callGasLimit) {
+            userOp.callGasLimit = this.toHex(sponsorResult.callGasLimit);
+        }
 
 
         const op = await this.accountAPI.signUserOp(userOp);
 
-        const options = {
-            'method': 'eth_sendUserOperation',
-            'params': [{
-                'sender': await op.sender,
-                'nonce': await op.nonce,
-                'initCode': await op.initCode,
-                'callData': await op.callData,
-                'callGasLimit': await op.callGasLimit,
-                'verificationGasLimit': await op.verificationGasLimit,
-                'maxFeePerGas': op.maxFeePerGas,
-                'maxPriorityFeePerGas': op.maxPriorityFeePerGas,
-                'paymasterAndData': await op.paymasterAndData,
-                'preVerificationGas': await op.preVerificationGas,
-                'signature': await op.signature,
-            }, entryPoint],
-            'id': 1,
-            'jsonrpc': '2.0',
-        };
-        console.log(options);
+        const options = this.createJsonRpcRequest('eth_sendUserOperation', [{
+            'sender': await op.sender,
+            'nonce': await op.nonce,
+            'initCode': await op.initCode,
+            'callData': await op.callData,
+            'callGasLimit': await op.callGasLimit,
+            'verificationGasLimit': await op.verificationGasLimit,
+            'maxFeePerGas': op.maxFeePerGas,
+            'maxPriorityFeePerGas': op.maxPriorityFeePerGas,
+            'paymasterAndData': await op.paymasterAndData,
+            'preVerificationGas': await op.preVerificationGas,
+            'signature': await op.signature,
+        }, entryPoint]);
 
-        console.log('bundlerUrl', bundlerUrl);
         this.eventEmitter.emit('beforeSubmitToBundler', op_arr);
         res = await axios.post(bundlerUrl, options);
         if (res.data.error) {
@@ -227,15 +207,9 @@ class CoinbaseHandler implements TransactionHandler {
     }
     async getUserOpByHash(res, timeout = 30, interval = 2) {
         console.log('hash', res.data.result);
-        const params = {
-            'method': 'eth_getUserOperationByHash',
-            'params': [
-                res.data.result,
-            ],
-            'id': 1,
-            'jsonrpc': '2.0',
-            'chainId': this.settings.chainId,
-        };
+        const params = this.createJsonRpcRequest('eth_getUserOperationByHash', [
+            res.data.result,
+        ]);
         const tokenUrl = `${this.settings.bundlerUrl}`;
         let hash;
         const endtime = Date.now() + timeout * 1000;
@@ -286,6 +260,15 @@ class CoinbaseHandler implements TransactionHandler {
     }
     toHex(n) {
         return '0x' + String(Number(n).toString(16));
+    }
+
+    private createJsonRpcRequest(method: string, params: any[]): any {
+        return {
+            jsonrpc: '2.0',
+            id: 1,
+            method: method,
+            params: params,
+        };
     }
 }
 export default CoinbaseHandler;

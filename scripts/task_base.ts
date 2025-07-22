@@ -1,5 +1,6 @@
 import { JVault } from '../src';
 import { JVaultConfig, OptionType, NetworkConfig, JVaultOrder } from '../src/utils/types/index';
+import { transformWriterSettings } from '../src/utils';
 import { ethers } from 'ethers';
 import { FeeData } from '@ethersproject/abstract-provider'
 import * as dotenv from 'dotenv';
@@ -105,7 +106,7 @@ async function main() {
         ethersSigner: ethersSigner,
         network: network_config.name,
         EOA: ethersSigner.address,
-        //  transactionHandler: coinbaseHandler,
+        transactionHandler: coinbaseHandler,
         gasSettings: {
             maxFeePerGas: feeData == undefined ? ethers.utils.parseUnits(network_config.defaultFeeData.maxFeePerGas, "gwei") : maxFeePerGas,
             maxPriorityFeePerGas: ethers.utils.parseUnits(network_config.defaultFeeData.maxPriorityFeePerGas, "gwei"),
@@ -205,7 +206,10 @@ async function sendDegenBatchOrders() {
     }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('base');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'base');
+    console.log(writer_config);
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
     console.log(`vaults.length: ${vaults.length}`);
     let vaults_0 = await jVault_holder.VaultAPI.getAddress(signer_Holder, 1);
@@ -266,7 +270,8 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
     }
     let signer_Holder = await config_holder.ethersSigner.getAddress();
     console.log('Holder Signer:' + signer_Holder);
-    let writer_config = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI();
+    let writer_settings_from_api = await jVault_holder.OptionTradingAPI.getOptionWriterSettingsFromAPI('base');
+    let writer_config = transformWriterSettings(writer_settings_from_api, 'base');
     let vaults = await jVault_holder.VaultAPI.getWalletToVault(signer_Holder);
     console.log(`vaults.length: ${vaults.length}`);
     let vaults_0 = await jVault_holder.VaultAPI.getAddress(signer_Holder, 1);
@@ -296,12 +301,12 @@ async function optionHolder_test(orderType: OptionType = OptionType.CALL) {
                 amount: ethers.utils.parseEther('0.01'),
                 underlyingAsset: ADDRESSES.base.CBBTC,
                 optionType: OptionType.CALL,
-                premiumAsset: ADDRESSES.base.CBBTC,
+                premiumAsset: ADDRESSES.base.USDC,
                 optionVault: ethers.constants.AddressZero,
                 optionWriter: writer_config.base.CALL.CBBTC,
                 premiumVault: vaults_1,
                 chainId: network_config.chainId,
-                secondsToExpiry: 3600 * 2
+                secondsToExpiry: 3600 * 1
             }, {
                 // maxFeePerGas: feeData.lastBaseFeePerGas?.mul(150).div(100)?.add(ethers.utils.parseUnits('0.01', 'gwei')),
                 // maxPriorityFeePerGas: ethers.utils.parseUnits('0.01', 'gwei'),
@@ -386,7 +391,6 @@ function formatManagedOptionsSettings(settings: any[]) {
     });
 }
 
-// ...existing code...
 main().catch(error => {
     console.error(error);
     // process.exitCode = 1;
